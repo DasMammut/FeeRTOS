@@ -50,8 +50,8 @@ int main(void){
 	PORTA.DIRSET = 0xFF;
 	PORTA.OUTCLR = 0xFF;
 
-	// Timer-Callback: toggelt PORTA alle 500ms (periodisch, da Timer immer wieder Overflow -> Callback)
-	FeeRTOS_CreateTimer(500, ToggleLedA, NULL);
+	// Periodischer Timer-Callback: toggelt PORTA alle 500ms
+	FeeRTOS_CreateTimer(500, ToggleLedA, NULL, true);
 
 	FeeRTOS_CreateTask(&TaskC);
 

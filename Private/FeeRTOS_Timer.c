@@ -2,7 +2,7 @@
 
 static TFeeRTOS_Timer* TimerListHead = NULL;
 
-TFeeRTOS_TimerHandle FeeRTOS_CreateTimer(unsigned long aMillis, void (*callback)(void* args), void* args){
+TFeeRTOS_TimerHandle FeeRTOS_CreateTimer(unsigned long aMillis, void (*callback)(void* args), void* args, bool aAutoReload){
 	if(aMillis == 0) return NULL;
 	TFeeRTOS_TimerHandle newTimer = (TFeeRTOS_TimerHandle)FeeRTOS_Malloc(sizeof(TFeeRTOS_Timer));
 	if(newTimer == NULL) return NULL;
@@ -10,6 +10,7 @@ TFeeRTOS_TimerHandle FeeRTOS_CreateTimer(unsigned long aMillis, void (*callback)
 	newTimer->TickCounter = 0;
 	newTimer->OverflowTicks = (unsigned long)((aMillis / 1000.0) / TICK_RATE);
 	newTimer->Overflow = false;
+	newTimer->AutoReload = aAutoReload;
 	newTimer->nextTimer = NULL;
 	newTimer->Callback = callback;
 	newTimer->CallbackArgs = args;
@@ -77,10 +78,15 @@ void CallbackTask(void* args) {
 			// nextTimer VORHER sichern, da Callback den Timer loeschen koennte (Use-After-Free)
 			TFeeRTOS_TimerHandle next = current->nextTimer;
 			if(current->Overflow && current->Callback != NULL){
+				bool autoReload = current->AutoReload;
 				current->Overflow = false; // VOR dem Callback zuruecksetzen
 				FeeRTOS_EXIT_CRITICAL();
 				current->Callback(current->CallbackArgs);
 				FeeRTOS_ENTER_CRITICAL();
+				// One-Shot Timer nach Callback loeschen
+				if(!autoReload){
+					FeeRTOS_DeleteTimer(current);
+				}
 			}
 			current = next;
 		}

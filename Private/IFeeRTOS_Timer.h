@@ -10,6 +10,7 @@ typedef struct SFeeRTOS_Timer{
 	unsigned long TickCounter;
 	unsigned long OverflowTicks;
 	bool Overflow;
+	bool AutoReload;
     void (*Callback)(void* args);
     void* CallbackArgs;
 	struct SFeeRTOS_Timer* nextTimer;

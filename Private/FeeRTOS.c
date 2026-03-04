@@ -205,7 +205,7 @@ void FeeRTOS_Yield(void) {
 
 void FeeRTOS_Delay(unsigned int aDelayMs) {
     FeeRTOS_ENTER_CRITICAL();
-    CurrentTask->DelayTimer = FeeRTOS_CreateTimer(aDelayMs, DelayCallback, CurrentTask);
+    CurrentTask->DelayTimer = FeeRTOS_CreateTimer(aDelayMs, DelayCallback, CurrentTask, false);
     if(CurrentTask->DelayTimer == NULL) {
         FeeRTOS_EXIT_CRITICAL();
         return; // malloc fehlgeschlagen, nicht blockieren
