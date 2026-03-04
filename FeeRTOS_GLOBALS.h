@@ -1,10 +1,6 @@
 #ifndef FEERTOS_GLOBALS_H
 #define FEERTOS_GLOBALS_H
 
-#ifndef F_CPU
-#define F_CPU 20000000/6
-#endif
-
 #define TICK_RATE 1e-3
 
 #define IDLE_STACK_SIZE 128

@@ -220,16 +220,30 @@ void FeeRTOS_Delay(unsigned int aDelayMs) {
 }
 
 void FeeRTOS_SuspendTask(char* aTaskNameID){
+    if(aTaskNameID == NULL || CurrentTask == NULL || TaskListHead == NULL || strlen(aTaskNameID) > 16) return;
 	TTaskInternal* temp = TaskListHead;
-	while(temp != NULL){
-		if(strcmp(temp->NameID, a))
-		
+	while(strcmp(temp->NameID, aTaskNameID) == 0){
+		if(temp == NULL) return;
 		temp = temp->nextTask;
 	}
+
+    FeeRTOS_ENTER_CRITICAL();
+    temp->State = TASK_STATE_SUSPENDED;
+    FeeRTOS_EXIT_CRITICAL();
+    if(temp == CurrentTask) FeeRTOS_Yield();
 }
 
 void FeeRTOS_ResumeTask(char* aTaskNameID){
-	
+	if(aTaskNameID == NULL || CurrentTask == NULL || TaskListHead == NULL || strlen(aTaskNameID) > 16) return;
+	TTaskInternal* temp = TaskListHead;
+	while(strcmp(temp->NameID, aTaskNameID) == 0){
+		if(temp == NULL) return;
+		temp = temp->nextTask;
+	}
+
+    FeeRTOS_ENTER_CRITICAL();
+    temp->State = TASK_STATE_READY;
+    FeeRTOS_EXIT_CRITICAL();
 }
 
 __attribute__((used))

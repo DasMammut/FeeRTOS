@@ -116,7 +116,6 @@ void FeeRTOS_ResumeTask(char* aTaskNameID);
 
 // ON the way !!!!
 // Yield umbauen das es keine Verzehrung macht // nicht möglich
-// FeeRTOS_SuspendTask und FeeRTOS_ResumeTask implementieren
 // FeeRTOS Semaphoren
 // FeeRTOS Mutexes
 // FeeRTOS Queues
