@@ -39,12 +39,12 @@ void FeeRTOS_CreateTask(TTaskConfig* aTaskConfig) {
     t->NameID[15] = '\0';
     t->Stack = Stack_Create(aTaskConfig->StackSize);
     t->nextTask = NULL;
-    t->State = TASK_STATE_READY;
     t->SuspendBlocked = false;
     t->DelayBlocked = false;
     t->SemaphoreBlocked = false;
     t->DelayTimer = NULL;
     t->Priority = aTaskConfig->Priority;
+    t->nextWaiting = NULL;
     if (t->Stack.Base == NULL) {
         free(t);
         return;
@@ -72,7 +72,7 @@ void FeeRTOS_CreateTask(TTaskConfig* aTaskConfig) {
 
     // R1–R31 (UserData in R24:R25 — AVR Calling Convention)
     for (unsigned char r = 0; r <= 31 + 1; r++) {
-        if (r == 1) // SREG
+        if (r == 1) // SREG // Interupts enabled
             byte = 0x80;
         else if (r == 24 + 1) // R24
             byte = (unsigned char)((uint16_t)(uintptr_t)aTaskConfig->UserData & 0xFF);
@@ -87,7 +87,6 @@ void FeeRTOS_CreateTask(TTaskConfig* aTaskConfig) {
 
 void FeeRTOS_DeleteTask(char* aTaskNameID) {
     if (TaskListHead == NULL || aTaskNameID == NULL || strlen(aTaskNameID) > 16) return;
-
     TTaskInternal* current = TaskListHead;
     TTaskInternal* previous = NULL;
     while(current != NULL){
@@ -209,10 +208,11 @@ void FeeRTOS_Delay(unsigned int aDelayMs) {
 void FeeRTOS_SuspendTask(char* aTaskNameID){
     if(aTaskNameID == NULL || CurrentTask == NULL || TaskListHead == NULL || strlen(aTaskNameID) > 16) return;
 	TTaskInternal* temp = TaskListHead;
-	while(strcmp(temp->NameID, aTaskNameID) != 0){
-		if(temp == NULL) return;
+	while(temp != NULL){
+		if(strcmp(temp->NameID, aTaskNameID) == 0) break;
 		temp = temp->nextTask;
 	}
+	if(temp == NULL) return;
 
     FeeRTOS_ENTER_CRITICAL();
     temp->SuspendBlocked = true;
@@ -223,14 +223,19 @@ void FeeRTOS_SuspendTask(char* aTaskNameID){
 void FeeRTOS_ResumeTask(char* aTaskNameID){
 	if(aTaskNameID == NULL || CurrentTask == NULL || TaskListHead == NULL || strlen(aTaskNameID) > 16) return;
 	TTaskInternal* temp = TaskListHead;
-	while(strcmp(temp->NameID, aTaskNameID) != 0){
-		if(temp == NULL) return;
+	while(temp != NULL){
+		if(strcmp(temp->NameID, aTaskNameID) == 0) break;
 		temp = temp->nextTask;
 	}
+	if(temp == NULL) return;
 
     FeeRTOS_ENTER_CRITICAL();
     temp->SuspendBlocked = false;
     FeeRTOS_EXIT_CRITICAL();
+}
+
+TTaskInternal* getCurrentTask(void) {
+    return CurrentTask;
 }
 
 __attribute__((used))
@@ -312,26 +317,39 @@ ISR(TCA0_OVF_vect, ISR_NAKED) {
 
 static TTaskInternal* getNextTask(void) {
     TTaskInternal* temp = TaskListHead;
-    TTaskPriority highestPrio = TASK_PRIORITY_IDLE;
-    while(temp != NULL){
-        if(isReadyToRun(temp) && temp->Priority > highestPrio) {
-            highestPrio = temp->Priority;
+    TTaskPriority highestPrioFound = TASK_PRIORITY_IDLE;
+
+    // 1. Finde die aktuell höchste Priorität unter allen READY Tasks
+    while(temp != NULL) {
+        if(isReadyToRun(temp)) {
+            if(temp->Priority > highestPrioFound) {
+                highestPrioFound = temp->Priority;
+            }
         }
         temp = temp->nextTask;
     }
-    if(highestPrio != CurrentTask->Priority) {
+
+    // 2. Entscheidungs-Logik:
+    // Fall A: Es gibt einen Task mit HÖHERER Prio als CurrentTask
+    // Fall B: CurrentTask ist nicht mehr Ready (muss also sowieso weg)
+    if (highestPrioFound > CurrentTask->Priority || !isReadyToRun(CurrentTask)) {
+        // Suche den ERSTEN Task mit dieser Prio (von vorne)
         temp = TaskListHead;
-        while(temp != NULL){
-            if(isReadyToRun(temp) && temp->Priority == highestPrio) {
+        while(temp != NULL) {
+            if(isReadyToRun(temp) && temp->Priority == highestPrioFound) {
                 return temp;
             }
             temp = temp->nextTask;
         }
-    }
+    } 
+    // Fall C: Round-Robin (Gleiche Prio wie CurrentTask)
     else {
+        // Wir starten die Suche direkt NACH dem aktuellen Task
         temp = CurrentTask->nextTask;
-        while(temp != CurrentTask){
-            if(isReadyToRun(temp) && temp->Priority == highestPrio) {
+        if(temp == NULL) temp = TaskListHead;
+
+        while(temp != CurrentTask) {
+            if(isReadyToRun(temp) && temp->Priority == highestPrioFound) {
                 return temp;
             }
             temp = temp->nextTask;
@@ -339,6 +357,7 @@ static TTaskInternal* getNextTask(void) {
         }
     }
 
+    // Wenn nichts gefunden wurde oder CurrentTask der einzige Ready-Task mit höchster Prio ist
     return CurrentTask;
 }
 
@@ -352,7 +371,10 @@ static void IdleTask(void* aUserData) {
         // else FeeRTOS_Yield(); // Wenn es einen anderen Task gibt, yielden
 		TTaskInternal* temp = TaskListHead;
         while(temp != NULL){
-            if(isReadyToRun(temp) && temp != CurrentTask) FeeRTOS_Yield(); // Wenn es einen anderen aktiven Task gibt, yielden
+            if(isReadyToRun(temp) && temp != CurrentTask) {
+                FeeRTOS_Yield(); // Wenn es einen anderen aktiven Task gibt, yielden
+                break;
+            }
             temp = temp->nextTask;
         }
     }

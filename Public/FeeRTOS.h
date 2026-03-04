@@ -26,6 +26,9 @@ typedef struct{
     char NameID[16];
 } TTaskConfig;
 
+#define FeeRTOS_ENTER_CRITICAL() unsigned char sreg_save = SREG; cli()
+#define FeeRTOS_EXIT_CRITICAL() SREG = sreg_save
+
 /*
  * FeeRTOS_Init
  * Initialisiert den RTOS-Kernel. Erstellt automatisch einen Idle-Task
@@ -105,10 +108,12 @@ void FeeRTOS_ResumeTask(char* aTaskNameID);
 
 // ON the way !!!!
 // Yield umbauen das es keine Verzehrung macht // nicht möglich
-// Tasks delays werden nicht von Suspended überschrieben
+// Stdint verwenden
 // FeeRTOS Semaphoren
 // FeeRTOS Mutexes
 // FeeRTOS Queues
 // FeeRTOS Mailboxes
+
+// 5
 
 #endif

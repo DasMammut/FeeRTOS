@@ -48,7 +48,7 @@ void FeeRTOS_DeleteTimer(TFeeRTOS_Timer* timer){
 
 void FeeRTOS_UpdateTimers(){
 	TFeeRTOS_Timer* current = TimerListHead;
-	while(current != NULL){
+	while(current != NULL && current->Overflow == false){
 		current->TickCounter++;
 		if(current->TickCounter >= current->OverflowTicks){
 			current->Overflow = true;

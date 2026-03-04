@@ -14,9 +14,6 @@
 #include "IFeeRTOS_Stack.h"
 #include "IFeeRTOS_Semaphore.h"
 
-#define FeeRTOS_ENTER_CRITICAL() unsigned char sreg_save = SREG; cli()
-#define FeeRTOS_EXIT_CRITICAL() SREG = sreg_save
-
 typedef struct TaskInternal {
     void (*TaskFunction)(void* aUserData);
     void* UserData;
@@ -27,9 +24,10 @@ typedef struct TaskInternal {
     bool SemaphoreBlocked;
     TFeeRTOS_Timer* DelayTimer;
     TTaskPriority Priority;
+    struct TaskInternal* nextWaiting;
     struct TaskInternal* nextTask;
 } TTaskInternal;
 
-
+TTaskInternal* getCurrentTask(void);
 
 #endif

@@ -1,9 +1,11 @@
 #include <avr/io.h>
+
+#define F_CPU (20000000UL/6)
+
 #include <avr/delay.h>
 
 #include "FeeRTOS.h"
 
-#define F_CPU 20000000/6
 
 
 void Task_1(void* aUserData){

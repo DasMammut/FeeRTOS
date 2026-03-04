@@ -1,18 +1,33 @@
 #ifndef FEERTOS_SEMAPHORE_H
 #define FEERTOS_SEMAPHORE_H
 
-typedef struct {
-    volatile int Count;
-    int MaxCount;
-} TFeeRTOS_Semaphore;
+typedef struct TSemaphore* TFeeRTOS_SemaphoreHandle;
 
-TFeeRTOS_Semaphore* FeeRTOS_CreateSemaphore(int aInitialCount, int aMaxCount, char* aTaskNameID);
+/*
+ * FeeRTOS_CreateSemaphore
+ * Erstellt eine Semaphore mit einem Anfangswert und einem Maximalwert.
+ * Gibt ein Handle zurueck oder NULL bei Fehler.
+ */
+TFeeRTOS_SemaphoreHandle FeeRTOS_CreateSemaphore(int aInitialCount, int aMaxCount);
 
-void FeeRTOS_DeleteSemaphore(TFeeRTOS_Semaphore* aSemaphore);
+/*
+ * FeeRTOS_DeleteSemaphore
+ * Loescht eine Semaphore und gibt alle wartenden Tasks frei.
+ */
+void FeeRTOS_DeleteSemaphore(TFeeRTOS_SemaphoreHandle aSemaphore);
 
-void FeeRTOS_SemaphoreTake(TFeeRTOS_Semaphore* aSemaphore);
+/*
+ * FeeRTOS_SemaphoreTake
+ * Dekrementiert die Semaphore. Wenn Count == 0, wird der aufrufende
+ * Task blockiert (SemaphoreBlocked) bis ein anderer Task Give aufruft.
+ */
+void FeeRTOS_SemaphoreTake(TFeeRTOS_SemaphoreHandle aSemaphore);
 
-void FeeRTOS_SemaphoreGive(TFeeRTOS_Semaphore* aSemaphore);
-
+/*
+ * FeeRTOS_SemaphoreGive
+ * Inkrementiert die Semaphore. Wenn Tasks warten, wird der erste
+ * wartende Task entblockt statt den Counter zu erhoehen.
+ */
+void FeeRTOS_SemaphoreGive(TFeeRTOS_SemaphoreHandle aSemaphore);
 
 #endif
