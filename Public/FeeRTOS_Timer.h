@@ -4,9 +4,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include "FeeRTOS_GLOBALS.h"
-#include "FeeRTOS.h"
-
 typedef struct FeeRTOS_Timer{
 	unsigned long TickCounter;
 	unsigned long OverflowTicks;

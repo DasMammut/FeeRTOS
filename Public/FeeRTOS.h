@@ -11,17 +11,6 @@
 #ifndef FEERTOS_H
 #define FEERTOS_H
 
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
-#include <avr/io.h>
-#include <avr/interrupt.h>
-
-#include "FeeRTOS_GLOBALS.h"
-#include "Timer.h"
-#include "Stack.h"
-#include "FeeRTOS_Timer.h"
-
 typedef enum{
     TASK_PRIORITY_IDLE = 0,
     TASK_PRIORITY_LOW,
@@ -116,6 +105,7 @@ void FeeRTOS_ResumeTask(char* aTaskNameID);
 
 // ON the way !!!!
 // Yield umbauen das es keine Verzehrung macht // nicht möglich
+// Tasks delays werden nicht von Suspended überschrieben
 // FeeRTOS Semaphoren
 // FeeRTOS Mutexes
 // FeeRTOS Queues

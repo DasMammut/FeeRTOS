@@ -1,4 +1,4 @@
-#include "FeeRTOS_Semaphore.h"
+#include "IFeeRTOS_Semaphore.h"
 
 TFeeRTOS_Semaphore* FeeRTOS_CreateSemaphore(int aInitialCount, int aMaxCount) {
     TFeeRTOS_Semaphore* semaphore = (TFeeRTOS_Semaphore*)malloc(sizeof(TFeeRTOS_Semaphore));

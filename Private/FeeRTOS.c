@@ -1,23 +1,4 @@
-#include "FeeRTOS.h"
-
-typedef enum{
-    TASK_STATE_RUNNING,
-    TASK_STATE_READY,
-    TASK_STATE_DELAYED,
-    TASK_STATE_WAITING,
-    TASK_STATE_SUSPENDED
-} TTaskState;
-
-typedef struct TaskInternal {
-    void (*TaskFunction)(void* aUserData);
-    void* UserData;
-    char NameID[16];
-    TStack Stack;
-    TTaskState State;
-    TFeeRTOS_Timer* DelayTimer;
-    TTaskPriority Priority;
-    struct TaskInternal* nextTask;
-} TTaskInternal;
+#include "IFeeRTOS.h"
 
 static TTaskInternal* TaskListHead = NULL;
 static TTaskInternal* CurrentTask = NULL;
