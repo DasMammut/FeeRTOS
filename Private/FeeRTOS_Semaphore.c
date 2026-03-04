@@ -1,4 +1,4 @@
-#include "IFeeRTOS_Semaphore.h"
+#include "IFeeRTOS.h"
 
 TFeeRTOS_SemaphoreHandle FeeRTOS_CreateSemaphore(int aInitialCount, int aMaxCount) {
     if(aInitialCount < 0 || aMaxCount <= 0 || aInitialCount > aMaxCount) return NULL;
