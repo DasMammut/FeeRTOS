@@ -222,7 +222,7 @@ void FeeRTOS_Delay(unsigned int aDelayMs) {
 void FeeRTOS_SuspendTask(char* aTaskNameID){
     if(aTaskNameID == NULL || CurrentTask == NULL || TaskListHead == NULL || strlen(aTaskNameID) > 16) return;
 	TTaskInternal* temp = TaskListHead;
-	while(strcmp(temp->NameID, aTaskNameID) == 0){
+	while(strcmp(temp->NameID, aTaskNameID) != 0){
 		if(temp == NULL) return;
 		temp = temp->nextTask;
 	}
@@ -236,7 +236,7 @@ void FeeRTOS_SuspendTask(char* aTaskNameID){
 void FeeRTOS_ResumeTask(char* aTaskNameID){
 	if(aTaskNameID == NULL || CurrentTask == NULL || TaskListHead == NULL || strlen(aTaskNameID) > 16) return;
 	TTaskInternal* temp = TaskListHead;
-	while(strcmp(temp->NameID, aTaskNameID) == 0){
+	while(strcmp(temp->NameID, aTaskNameID) != 0){
 		if(temp == NULL) return;
 		temp = temp->nextTask;
 	}
