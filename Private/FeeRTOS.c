@@ -13,6 +13,8 @@ static void Schedule(void);
 
 static TTaskInternal* getNextTask(void);
 
+static inline bool isReadyToRun(TTaskInternal* task);
+
 static void IdleTask(void* aUserData);
 
 
@@ -38,6 +40,9 @@ void FeeRTOS_CreateTask(TTaskConfig* aTaskConfig) {
     t->Stack = Stack_Create(aTaskConfig->StackSize);
     t->nextTask = NULL;
     t->State = TASK_STATE_READY;
+    t->SuspendBlocked = false;
+    t->DelayBlocked = false;
+    t->SemaphoreBlocked = false;
     t->DelayTimer = NULL;
     t->Priority = aTaskConfig->Priority;
     if (t->Stack.Base == NULL) {
@@ -196,7 +201,7 @@ void FeeRTOS_Delay(unsigned int aDelayMs) {
         FeeRTOS_EXIT_CRITICAL();
         return; // malloc fehlgeschlagen, nicht blockieren
     }
-    CurrentTask->State = TASK_STATE_DELAYED;
+    CurrentTask->DelayBlocked = true;
     FeeRTOS_EXIT_CRITICAL();
     FeeRTOS_Yield();
 }
@@ -210,7 +215,7 @@ void FeeRTOS_SuspendTask(char* aTaskNameID){
 	}
 
     FeeRTOS_ENTER_CRITICAL();
-    temp->State = TASK_STATE_SUSPENDED;
+    temp->SuspendBlocked = true;
     FeeRTOS_EXIT_CRITICAL();
     if(temp == CurrentTask) FeeRTOS_Yield();
 }
@@ -224,7 +229,7 @@ void FeeRTOS_ResumeTask(char* aTaskNameID){
 	}
 
     FeeRTOS_ENTER_CRITICAL();
-    temp->State = TASK_STATE_READY;
+    temp->SuspendBlocked = false;
     FeeRTOS_EXIT_CRITICAL();
 }
 
@@ -242,9 +247,9 @@ static void Schedule(void) {
 
     TTaskInternal* temp = TaskListHead;
     while(temp != NULL){
-        if(temp->State == TASK_STATE_DELAYED) {
+        if(temp->DelayBlocked) {
             if(temp->DelayTimer != NULL && temp->DelayTimer->Overflow){
-                temp->State = TASK_STATE_READY;
+                temp->DelayBlocked = false;
                 FeeRTOS_DeleteTimer(temp->DelayTimer);
                 temp->DelayTimer = NULL;
             }
@@ -309,7 +314,7 @@ static TTaskInternal* getNextTask(void) {
     TTaskInternal* temp = TaskListHead;
     TTaskPriority highestPrio = TASK_PRIORITY_IDLE;
     while(temp != NULL){
-        if(temp->State == TASK_STATE_READY && temp->Priority > highestPrio) {
+        if(isReadyToRun(temp) && temp->Priority > highestPrio) {
             highestPrio = temp->Priority;
         }
         temp = temp->nextTask;
@@ -317,7 +322,7 @@ static TTaskInternal* getNextTask(void) {
     if(highestPrio != CurrentTask->Priority) {
         temp = TaskListHead;
         while(temp != NULL){
-            if(temp->State == TASK_STATE_READY && temp->Priority == highestPrio) {
+            if(isReadyToRun(temp) && temp->Priority == highestPrio) {
                 return temp;
             }
             temp = temp->nextTask;
@@ -326,7 +331,7 @@ static TTaskInternal* getNextTask(void) {
     else {
         temp = CurrentTask->nextTask;
         while(temp != CurrentTask){
-            if(temp->State == TASK_STATE_READY && temp->Priority == highestPrio) {
+            if(isReadyToRun(temp) && temp->Priority == highestPrio) {
                 return temp;
             }
             temp = temp->nextTask;
@@ -337,13 +342,17 @@ static TTaskInternal* getNextTask(void) {
     return CurrentTask;
 }
 
+static inline bool isReadyToRun(TTaskInternal* task) {
+    return !(task->SuspendBlocked || task->DelayBlocked || task->SemaphoreBlocked);
+}
+
 static void IdleTask(void* aUserData) {
     while (1) {
         if(TaskListHead->nextTask == NULL) asm volatile("sleep"); // asm volatile("nop");
         // else FeeRTOS_Yield(); // Wenn es einen anderen Task gibt, yielden
 		TTaskInternal* temp = TaskListHead;
         while(temp != NULL){
-            if(temp->State == TASK_STATE_READY && strcmp(temp->NameID, IDLE_TASK_NAME) != 0) FeeRTOS_Yield(); // Wenn es einen anderen aktiven Task gibt, yielden
+            if(isReadyToRun(temp) && temp != CurrentTask) FeeRTOS_Yield(); // Wenn es einen anderen aktiven Task gibt, yielden
             temp = temp->nextTask;
         }
     }

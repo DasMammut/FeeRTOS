@@ -17,23 +17,19 @@
 #define FeeRTOS_ENTER_CRITICAL() unsigned char sreg_save = SREG; cli()
 #define FeeRTOS_EXIT_CRITICAL() SREG = sreg_save
 
-typedef enum{
-    TASK_STATE_RUNNING,
-    TASK_STATE_READY,
-    TASK_STATE_DELAYED,
-    TASK_STATE_WAITING,
-    TASK_STATE_SUSPENDED
-} TTaskState;
-
 typedef struct TaskInternal {
     void (*TaskFunction)(void* aUserData);
     void* UserData;
     char NameID[16];
     TStack Stack;
-    TTaskState State;
+    bool SuspendBlocked;
+    bool DelayBlocked;
+    bool SemaphoreBlocked;
     TFeeRTOS_Timer* DelayTimer;
     TTaskPriority Priority;
     struct TaskInternal* nextTask;
 } TTaskInternal;
+
+
 
 #endif
