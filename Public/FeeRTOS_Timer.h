@@ -4,16 +4,17 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-typedef struct FeeRTOS_Timer{
-	unsigned long TickCounter;
-	unsigned long OverflowTicks;
-	bool Overflow;
-	struct FeeRTOS_Timer* nextTimer;
-} TFeeRTOS_Timer;
+typedef struct SFeeRTOS_Timer* TFeeRTOS_TimerHandle;
 
-TFeeRTOS_Timer* FeeRTOS_CreateTimer(unsigned long aMillis);
+/*
+ * FeeRTOS_CreateTimer
+ * Erstellt einen Software-Timer. Wenn callback != NULL, wird beim
+ * Ablauf die Callback-Funktion im CallbackTask-Kontext aufgerufen.
+ * Wenn callback == NULL, wird nur das Overflow-Flag gesetzt.
+ */
+TFeeRTOS_TimerHandle FeeRTOS_CreateTimer(unsigned long aMillis, void (*callback)(void* args), void* args);
 
-void FeeRTOS_DeleteTimer(TFeeRTOS_Timer* timer);
+void FeeRTOS_DeleteTimer(TFeeRTOS_TimerHandle timer);
 
 void FeeRTOS_UpdateTimers();
 

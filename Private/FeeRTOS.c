@@ -17,15 +17,25 @@ static inline bool isReadyToRun(TTaskInternal* task);
 
 static void IdleTask(void* aUserData);
 
+static void DelayCallback(void* args);
+
 
 void FeeRTOS_Init(void) {
     TTaskConfig idleTaskConfig = {
         .TaskFunction = IdleTask,
         .UserData     = NULL,
-        .StackSize    = IDLE_STACK_SIZE,
+        .StackSize    = IDLE_TASK_STACK_SIZE,
         .NameID       = IDLE_TASK_NAME
     };
     FeeRTOS_CreateTask(&idleTaskConfig);
+    TTaskConfig callbackTaskConfig = {
+        .TaskFunction = CallbackTask,
+        .UserData = NULL,
+        .StackSize = CALLBACK_TASK_STACK_SIZE,
+        .Priority = TASK_PRIORITY_CALLBACK,
+        .NameID = CALLBACK_TASK_NAME
+    };
+    FeeRTOS_CreateTask(&callbackTaskConfig);
 }
 
 void FeeRTOS_CreateTask(TTaskConfig* aTaskConfig) {
@@ -195,7 +205,7 @@ void FeeRTOS_Yield(void) {
 
 void FeeRTOS_Delay(unsigned int aDelayMs) {
     FeeRTOS_ENTER_CRITICAL();
-    CurrentTask->DelayTimer = FeeRTOS_CreateTimer(aDelayMs);
+    CurrentTask->DelayTimer = FeeRTOS_CreateTimer(aDelayMs, DelayCallback, CurrentTask);
     if(CurrentTask->DelayTimer == NULL) {
         FeeRTOS_EXIT_CRITICAL();
         return; // malloc fehlgeschlagen, nicht blockieren
@@ -248,18 +258,6 @@ static void Schedule(void) {
     } 
     else {
         FeeRTOS_UpdateTimers();
-    }
-
-    TTaskInternal* temp = TaskListHead;
-    while(temp != NULL){
-        if(temp->DelayBlocked) {
-            if(temp->DelayTimer != NULL && temp->DelayTimer->Overflow){
-                temp->DelayBlocked = false;
-                FeeRTOS_DeleteTimer(temp->DelayTimer);
-                temp->DelayTimer = NULL;
-            }
-        }
-        temp = temp->nextTask;
     }
 
     CurrentTask = getNextTask();
@@ -378,4 +376,13 @@ static void IdleTask(void* aUserData) {
             temp = temp->nextTask;
         }
     }
+}
+
+static void DelayCallback(void* args) {
+    TTaskInternal* task = (TTaskInternal*)args;
+    FeeRTOS_ENTER_CRITICAL();
+    task->DelayBlocked = false;
+    FeeRTOS_DeleteTimer(task->DelayTimer);
+    task->DelayTimer = NULL;
+    FeeRTOS_EXIT_CRITICAL();
 }

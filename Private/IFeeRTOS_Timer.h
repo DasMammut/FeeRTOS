@@ -6,4 +6,15 @@
 #include "FeeRTOS_GLOBALS.h"
 #include "IFeeRTOS.h"
 
+typedef struct SFeeRTOS_Timer{
+	unsigned long TickCounter;
+	unsigned long OverflowTicks;
+	bool Overflow;
+    void (*Callback)(void* args);
+    void* CallbackArgs;
+	struct SFeeRTOS_Timer* nextTimer;
+} TFeeRTOS_Timer;
+
+void CallbackTask(void* args);
+
 #endif

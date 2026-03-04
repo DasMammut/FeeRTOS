@@ -15,7 +15,8 @@ typedef enum{
     TASK_PRIORITY_IDLE = 0,
     TASK_PRIORITY_LOW,
     TASK_PRIORITY_MEDIUM,
-    TASK_PRIORITY_HIGH
+    TASK_PRIORITY_HIGH,
+    TASK_PRIORITY_CALLBACK
 } TTaskPriority;
 
 typedef struct{
@@ -109,7 +110,8 @@ void FeeRTOS_ResumeTask(char* aTaskNameID);
 // ON the way !!!!
 // Yield umbauen das es keine Verzehrung macht // nicht möglich
 // Stdint verwenden
-// FeeRTOS Semaphoren
+// Tasks auf Handl umstellen Namen -> Handle (Zeiger auf Task-Struktur)
+// FeeRTOS Timer verbessern mit Semaphore-Integration (Task blockiert bis Timer abgelaufen ist)
 // FeeRTOS Mutexes
 // FeeRTOS Queues
 // FeeRTOS Mailboxes

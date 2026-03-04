@@ -1,7 +1,7 @@
 #ifndef FEERTOS_SEMAPHORE_H
 #define FEERTOS_SEMAPHORE_H
 
-typedef struct TSemaphore* TFeeRTOS_SemaphoreHandle;
+typedef struct SFeeRTOS_Semaphore* TFeeRTOS_SemaphoreHandle;
 
 /*
  * FeeRTOS_CreateSemaphore

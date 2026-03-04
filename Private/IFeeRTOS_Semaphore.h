@@ -5,11 +5,12 @@
 
 #include <stdint.h>
 
-typedef struct TSemaphore {
+typedef struct SFeeRTOS_Semaphore {
     volatile uint8_t Count;
     uint8_t MaxCount;
     struct TaskInternal* WaitingListHead;
     struct TaskInternal* WaitingListTail;
-} TSemaphore;
+} TFeeRTOS_Semaphore;
+
 
 #endif
