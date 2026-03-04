@@ -3,7 +3,8 @@
 typedef enum{
     TASK_STATE_RUNNING,
     TASK_STATE_READY,
-    TASK_STATE_BLOCKED,
+    TASK_STATE_DELAYED,
+    TASK_STATE_WAITING,
     TASK_STATE_SUSPENDED
 } TTaskState;
 
@@ -214,7 +215,7 @@ void FeeRTOS_Delay(unsigned int aDelayMs) {
         FeeRTOS_EXIT_CRITICAL();
         return; // malloc fehlgeschlagen, nicht blockieren
     }
-    CurrentTask->State = TASK_STATE_BLOCKED;
+    CurrentTask->State = TASK_STATE_DELAYED;
     FeeRTOS_EXIT_CRITICAL();
     FeeRTOS_Yield();
 }
@@ -260,7 +261,7 @@ static void Schedule(void) {
 
     TTaskInternal* temp = TaskListHead;
     while(temp != NULL){
-        if(temp->State == TASK_STATE_BLOCKED) {
+        if(temp->State == TASK_STATE_DELAYED) {
             if(temp->DelayTimer != NULL && temp->DelayTimer->Overflow){
                 temp->State = TASK_STATE_READY;
                 FeeRTOS_DeleteTimer(temp->DelayTimer);
