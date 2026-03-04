@@ -4,7 +4,6 @@
 #include "FeeRTOS_Timer.h"
 
 #include "FeeRTOS_GLOBALS.h"
-#include "IFeeRTOS.h"
 
 typedef struct SFeeRTOS_Timer{
 	unsigned long TickCounter;

@@ -3,7 +3,7 @@
 TFeeRTOS_SemaphoreHandle FeeRTOS_CreateSemaphore(int aInitialCount, int aMaxCount) {
     if(aInitialCount < 0 || aMaxCount <= 0 || aInitialCount > aMaxCount) return NULL;
 
-    TSemaphore* semaphore = (TSemaphore*)FeeRTOS_Malloc(sizeof(TSemaphore));
+    TFeeRTOS_SemaphoreHandle semaphore = (TFeeRTOS_SemaphoreHandle)FeeRTOS_Malloc(sizeof(TFeeRTOS_Semaphore));
     if(semaphore == NULL) return NULL;
 
     semaphore->Count = (uint8_t)aInitialCount;
