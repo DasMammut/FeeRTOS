@@ -72,18 +72,6 @@ void FeeRTOS_DeleteTask(TFeeRTOS_TaskHandle aTaskHandle);
 void FeeRTOS_StartScheduler(void);
 
 /*
- * FeeRTOS_Malloc
- * Thread-sichere malloc-Implementierung. Sperrt Interrupts und
- * setzt den Stack Pointer auf RAMEND, um die interne malloc-Logik
- * zu schuetzen. Nach der Allokation wird der originale Stack Pointer
- * wiederhergestellt.
- *
- * size - Anzahl der Bytes, die allokiert werden sollen
- * Rueckgabewert: Zeiger auf den allokierten Speicher oder NULL bei Fehler
- */
-void* FeeRTOS_Malloc(uint16_t size);
-
-/*
  * FeeRTOS_Yield
  * Gibt die CPU freiwillig ab. Startet den Timer neu und loest
  * sofort einen Timer-Overflow-Interrupt aus, was einen
@@ -106,7 +94,6 @@ void FeeRTOS_ResumeTask(TFeeRTOS_TaskHandle aTaskHandle);
 
 // ON the way !!!!
 // Yield umbauen das es keine Verzehrung macht // nicht möglich
-// Stack auf Handl umstellen
 // FeeRTOS_Heap mit malloc und free
 // FeeRTOS Queues
 // FeeRTOS Mailboxes

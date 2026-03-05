@@ -33,7 +33,7 @@ bool TimerInit(TTimerNo aTimerNo, uint32_t aCpuClk, TTimerMode aTimerMode, float
 	if (aTimerNo >= TIMER_NO_LAST || Timer[aTimerNo] != NULL)
 	return false;
 
-	Timer[aTimerNo] = calloc(1, sizeof(struct TTimerStruct));
+	Timer[aTimerNo] = FeeRTOS_Malloc(sizeof(struct TTimerStruct));
 	if (!Timer[aTimerNo]) return false;
 
 	memset(Timer[aTimerNo], 0, sizeof(struct TTimerStruct));
@@ -64,7 +64,7 @@ void TimerDone(TTimerNo aTimerNo){
 		default:
 			return;
 	}
-	free(Timer[aTimerNo]);
+	FeeRTOS_Free(Timer[aTimerNo]);
 	Timer[aTimerNo] = NULL;
 }
 

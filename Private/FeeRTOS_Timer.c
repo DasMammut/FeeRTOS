@@ -34,7 +34,7 @@ void FeeRTOS_DeleteTimer(TFeeRTOS_TimerHandle timer){
 
 	if(TimerListHead == timer){
 		TimerListHead = TimerListHead->nextTimer;
-		free(timer);
+		FeeRTOS_Free(timer);
 		return;
 	}
 
@@ -45,7 +45,7 @@ void FeeRTOS_DeleteTimer(TFeeRTOS_TimerHandle timer){
 
 	if(current->nextTimer == timer){
 		current->nextTimer = timer->nextTimer;
-		free(timer);
+		FeeRTOS_Free(timer);
 	}
 }
 
@@ -74,7 +74,7 @@ void CallbackTask(void* args) {
 		FeeRTOS_ENTER_CRITICAL();
 		TFeeRTOS_TimerHandle current = TimerListHead;
 		while(current != NULL){
-			// nextTimer VORHER sichern, da Callback den Timer loeschen koennte (Use-After-Free)
+			// nextTimer VORHER sichern, da Callback den Timer loeschen koennte (Use-After-FeeRTOS_Free)
 			TFeeRTOS_TimerHandle next = current->nextTimer;
 			if(current->Overflow && current->Callback != NULL){
 				bool autoReload = current->AutoReload;

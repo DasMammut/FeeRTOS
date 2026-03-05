@@ -41,7 +41,7 @@ TFeeRTOS_TaskHandle FeeRTOS_CreateTask(void (*aTaskFunction)(void* aUserData), v
     t->Priority = Priority;
     t->nextWaiting = NULL;
     if (t->Stack == NULL) {
-        free(t);
+        FeeRTOS_Free(t);
         return NULL;
     }
 
@@ -106,7 +106,7 @@ void FeeRTOS_DeleteTask(TFeeRTOS_TaskHandle aTaskHandle) {
         previous->nextTask = aTaskHandle->nextTask;
     }
 
-    free(aTaskHandle);
+    FeeRTOS_Free(aTaskHandle);
 
     FeeRTOS_EXIT_CRITICAL();
     if(isCurrentTask) {
@@ -149,24 +149,6 @@ void FeeRTOS_StartScheduler(void) {
         "reti                 \n\t"
     );
     __builtin_unreachable(); // Compiler info dass diese Funktion nie zurückkehrt
-}
-
-void* FeeRTOS_Malloc(uint16_t size) {
-    FeeRTOS_ENTER_CRITICAL();
-
-    if (SchedulerRunning) {
-        MallocSavedSP = SP;
-        SP = RAMEND;
-    }
-
-    void* ptr = malloc(size);
-
-    if (SchedulerRunning) {
-        SP = MallocSavedSP;
-    }
-
-    FeeRTOS_EXIT_CRITICAL();
-    return ptr;
 }
 
 void FeeRTOS_Yield(void) {

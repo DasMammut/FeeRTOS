@@ -9,7 +9,7 @@ TFeeRTOS_StackHandle Stack_Create(uint16_t aSize) {
 		stack->StackPointer = (uint8_t*)stack->Base + aSize - 1;
 	}
 	else {
-		free(stack);
+		FeeRTOS_Free(stack);
 		return NULL;
 	}
 	return stack;
@@ -39,9 +39,9 @@ void Stack_Pop(TFeeRTOS_StackHandle aStack, void* aData, uint16_t aDataSize) {
 
 void Stack_Destroy(TFeeRTOS_StackHandle aStack){
     if (aStack == NULL || aStack->Base == NULL) return;
-    free(aStack->Base);
+    FeeRTOS_Free(aStack->Base);
     aStack->Base = NULL;
     aStack->StackPointer = NULL;
     aStack->Size = 0;
-    free(aStack);
+    FeeRTOS_Free(aStack);
 }

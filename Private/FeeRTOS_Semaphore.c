@@ -25,7 +25,7 @@ void FeeRTOS_DeleteSemaphore(TFeeRTOS_SemaphoreHandle aSemaphore){
         task->nextWaiting = NULL;
         task = next;
     }
-    free(aSemaphore);
+    FeeRTOS_Free(aSemaphore);
     FeeRTOS_EXIT_CRITICAL();
 }
 

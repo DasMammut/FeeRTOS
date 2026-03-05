@@ -7,6 +7,8 @@
 #include <string.h>
 #include <avr/interrupt.h>
 
+#include "IFeeRTOS_Heap.h"
+
 typedef enum{
 	TIMER_NO_A0_16,
 	TIMER_NO_A0_8_1,

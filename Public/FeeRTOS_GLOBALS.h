@@ -6,4 +6,6 @@
 #define IDLE_TASK_STACK_SIZE 128
 #define CALLBACK_TASK_STACK_SIZE 128
 
+#define HEAP_SIZE 2048
+
 #endif

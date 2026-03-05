@@ -14,6 +14,7 @@
 #include "IFeeRTOS_Timer.h"
 #include "IFeeRTOS_Stack.h"
 #include "IFeeRTOS_Semaphore.h"
+#include "IFeeRTOS_Heap.h"
 
 typedef struct SFeeRTOS_Task {
     void (*TaskFunction)(void* aUserData);
