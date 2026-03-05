@@ -5,11 +5,13 @@
 
 #include <stdint.h>
 
+#include "IFeeRTOS.h"
+
 typedef struct SFeeRTOS_Semaphore {
     volatile uint8_t Count;
     uint8_t MaxCount;
-    struct TaskInternal* WaitingListHead;
-    struct TaskInternal* WaitingListTail;
+    TFeeRTOS_TaskHandle WaitingListHead;
+    TFeeRTOS_TaskHandle WaitingListTail;
 } TFeeRTOS_Semaphore;
 
 

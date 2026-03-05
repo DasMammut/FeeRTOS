@@ -15,21 +15,21 @@
 #include "IFeeRTOS_Stack.h"
 #include "IFeeRTOS_Semaphore.h"
 
-typedef struct TaskInternal {
+typedef struct SFeeRTOS_Task {
     void (*TaskFunction)(void* aUserData);
     void* UserData;
-    char NameID[16];
     TStack Stack;
     bool SuspendBlocked;
     bool DelayBlocked;
     bool SemaphoreBlocked;
     TFeeRTOS_Timer* DelayTimer;
     TTaskPriority Priority;
-    struct TaskInternal* nextWaiting;
-    struct TaskInternal* nextTask;
-} TTaskInternal;
+    struct SFeeRTOS_Task* nextWaiting;
+    struct SFeeRTOS_Task* nextTask;
+} TFeeRTOS_Task;
 
-TTaskInternal* getCurrentTask(void);
+TFeeRTOS_TaskHandle getCurrentTask(void);
+TFeeRTOS_TaskHandle getCallbackTask(void);
 
 volatile uint32_t TickCount;
 

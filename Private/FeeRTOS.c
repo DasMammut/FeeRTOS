@@ -1,7 +1,8 @@
 #include "IFeeRTOS.h"
 
-static TTaskInternal* TaskListHead = NULL;
-static TTaskInternal* CurrentTask = NULL;
+static TFeeRTOS_TaskHandle TaskListHead = NULL;
+static TFeeRTOS_TaskHandle CurrentTask = NULL;
+static TFeeRTOS_TaskHandle CallbackTaskHandle = NULL;
 
 static volatile bool SchedulerRunning = false;
 static volatile uint16_t SavedSP;
@@ -11,53 +12,37 @@ static volatile uint16_t ForcedYieldSavedCNT = 0;
 
 static void Schedule(void);
 
-static TTaskInternal* getNextTask(void);
+static TFeeRTOS_TaskHandle getNextTask(void);
 
-static inline bool isReadyToRun(TTaskInternal* task);
+static inline bool isReadyToRun(TFeeRTOS_TaskHandle task);
 
 static void IdleTask(void* aUserData);
 
 static void DelayCallback(void* args);
 
-
 void FeeRTOS_Init(void) {
-    TTaskConfig idleTaskConfig = {
-        .TaskFunction = IdleTask,
-        .UserData     = NULL,
-        .StackSize    = IDLE_TASK_STACK_SIZE,
-        .NameID       = IDLE_TASK_NAME
-    };
-    FeeRTOS_CreateTask(&idleTaskConfig);
-    TTaskConfig callbackTaskConfig = {
-        .TaskFunction = CallbackTask,
-        .UserData = NULL,
-        .StackSize = CALLBACK_TASK_STACK_SIZE,
-        .Priority = TASK_PRIORITY_CALLBACK,
-        .NameID = CALLBACK_TASK_NAME
-    };
-    FeeRTOS_CreateTask(&callbackTaskConfig);
+    FeeRTOS_CreateTask(IdleTask, NULL, IDLE_TASK_STACK_SIZE, TASK_PRIORITY_IDLE);
+    CallbackTaskHandle = FeeRTOS_CreateTask(CallbackTask, NULL, CALLBACK_TASK_STACK_SIZE, TASK_PRIORITY_CALLBACK);
 }
 
-void FeeRTOS_CreateTask(TTaskConfig* aTaskConfig) {
-    if(aTaskConfig == NULL) return;
-    TTaskInternal* t = (TTaskInternal*)FeeRTOS_Malloc(sizeof(TTaskInternal));
-    if (t == NULL) return;
+TFeeRTOS_TaskHandle FeeRTOS_CreateTask(void (*aTaskFunction)(void* aUserData), void* aUserData, uint16_t StackSize, TTaskPriority Priority) {
+    if(aTaskFunction == NULL) return NULL;
+    TFeeRTOS_TaskHandle t = (TFeeRTOS_TaskHandle)FeeRTOS_Malloc(sizeof(TFeeRTOS_Task));
+    if (t == NULL) return NULL;
 
-    t->TaskFunction = aTaskConfig->TaskFunction;
-    t->UserData = aTaskConfig->UserData;
-    strncpy(t->NameID, aTaskConfig->NameID, 15);
-    t->NameID[15] = '\0';
-    t->Stack = Stack_Create(aTaskConfig->StackSize);
+    t->TaskFunction = aTaskFunction;
+    t->UserData = aUserData;
+    t->Stack = Stack_Create(StackSize);
     t->nextTask = NULL;
     t->SuspendBlocked = false;
     t->DelayBlocked = false;
     t->SemaphoreBlocked = false;
     t->DelayTimer = NULL;
-    t->Priority = aTaskConfig->Priority;
+    t->Priority = Priority;
     t->nextWaiting = NULL;
     if (t->Stack.Base == NULL) {
         free(t);
-        return;
+        return NULL;
     }
 
     FeeRTOS_ENTER_CRITICAL();
@@ -65,7 +50,7 @@ void FeeRTOS_CreateTask(TTaskConfig* aTaskConfig) {
         TaskListHead = t;
     } 
     else {
-        TTaskInternal* current = TaskListHead;
+        TFeeRTOS_TaskHandle current = TaskListHead;
         while (current->nextTask != NULL) {
             current = current->nextTask;
         }
@@ -74,7 +59,7 @@ void FeeRTOS_CreateTask(TTaskConfig* aTaskConfig) {
 
     // Initialen Kontext auf den Stack legen (simuliert ISR-Entry + Context Save)
     uint8_t byte;
-    uint16_t pc = (uint16_t)(uintptr_t)aTaskConfig->TaskFunction;
+    uint16_t pc = (uint16_t)(uintptr_t)aTaskFunction;
     byte = (uint8_t)(pc & 0xFF); // PC Low-Byte
     Stack_Push(&t->Stack, &byte, 1);
     byte = (uint8_t)((pc >> 8) & 0xFF); // PC High-Byte
@@ -85,54 +70,47 @@ void FeeRTOS_CreateTask(TTaskConfig* aTaskConfig) {
         if (r == 1) // SREG // Interupts enabled
             byte = 0x80;
         else if (r == 24 + 1) // R24
-            byte = (uint8_t)((uint16_t)(uintptr_t)aTaskConfig->UserData & 0xFF);
+            byte = (uint8_t)((uint16_t)(uintptr_t)aUserData & 0xFF);
         else if (r == 25 + 1) // R25
-            byte = (uint8_t)(((uint16_t)(uintptr_t)aTaskConfig->UserData >> 8) & 0xFF);
+            byte = (uint8_t)(((uint16_t)(uintptr_t)aUserData >> 8) & 0xFF);
         else
             byte = 0x00;
         Stack_Push(&t->Stack, &byte, 1);
     }
     FeeRTOS_EXIT_CRITICAL();
+    return t;
 }
 
-void FeeRTOS_DeleteTask(char* aTaskNameID) {
-    if (TaskListHead == NULL || aTaskNameID == NULL || strlen(aTaskNameID) > 16) return;
-    TTaskInternal* current = TaskListHead;
-    TTaskInternal* previous = NULL;
-    while(current != NULL){
-        if(strcmp(current->NameID, aTaskNameID) == 0){
-            break;
-        }
-        previous = current;
-        current = current->nextTask;
-    }
-
-    if(current == NULL || current == TaskListHead) return; // Task nicht gefunden oder IdleTask darf nicht gelöscht werden
+void FeeRTOS_DeleteTask(TFeeRTOS_TaskHandle aTaskHandle) {
+    if (aTaskHandle == NULL) return;
 
     FeeRTOS_ENTER_CRITICAL();
 
-    if(current->DelayTimer != NULL) {
-        FeeRTOS_DeleteTimer(current->DelayTimer);
-        current->DelayTimer = NULL;
+    if(aTaskHandle->DelayTimer != NULL) {
+        FeeRTOS_DeleteTimer(aTaskHandle->DelayTimer);
+        aTaskHandle->DelayTimer = NULL;
     }
 
-    Stack_Destroy(&current->Stack);
+    Stack_Destroy(&aTaskHandle->Stack);
 
-    bool isCurrentTask = (current == CurrentTask);
+    bool isCurrentTask = (aTaskHandle == CurrentTask);
 
-    if (previous == NULL) {
-        TaskListHead = current->nextTask;
+    if (aTaskHandle == TaskListHead) {
+        TaskListHead = aTaskHandle->nextTask;
     } 
     else {
-        previous->nextTask = current->nextTask;
+        TFeeRTOS_TaskHandle previous = TaskListHead;
+        while (previous->nextTask != aTaskHandle) {
+            previous = previous->nextTask;
+        }
+        previous->nextTask = aTaskHandle->nextTask;
     }
 
-    free(current);
+    free(aTaskHandle);
 
     FeeRTOS_EXIT_CRITICAL();
     if(isCurrentTask) {
         FeeRTOS_Yield();
-        while(1);
     }
 }
 
@@ -215,37 +193,29 @@ void FeeRTOS_Delay(uint16_t aDelayMs) {
     FeeRTOS_Yield();
 }
 
-void FeeRTOS_SuspendTask(char* aTaskNameID){
-    if(aTaskNameID == NULL || CurrentTask == NULL || TaskListHead == NULL || strlen(aTaskNameID) > 16) return;
-	TTaskInternal* temp = TaskListHead;
-	while(temp != NULL){
-		if(strcmp(temp->NameID, aTaskNameID) == 0) break;
-		temp = temp->nextTask;
-	}
-	if(temp == NULL) return;
+void FeeRTOS_SuspendTask(TFeeRTOS_TaskHandle aTaskHandle){
+    if(aTaskHandle == NULL) return;
 
     FeeRTOS_ENTER_CRITICAL();
-    temp->SuspendBlocked = true;
+    aTaskHandle->SuspendBlocked = true;
     FeeRTOS_EXIT_CRITICAL();
-    if(temp == CurrentTask) FeeRTOS_Yield();
+    if(aTaskHandle == CurrentTask) FeeRTOS_Yield();
 }
 
-void FeeRTOS_ResumeTask(char* aTaskNameID){
-	if(aTaskNameID == NULL || CurrentTask == NULL || TaskListHead == NULL || strlen(aTaskNameID) > 16) return;
-	TTaskInternal* temp = TaskListHead;
-	while(temp != NULL){
-		if(strcmp(temp->NameID, aTaskNameID) == 0) break;
-		temp = temp->nextTask;
-	}
-	if(temp == NULL) return;
+void FeeRTOS_ResumeTask(TFeeRTOS_TaskHandle aTaskHandle){
+	if(aTaskHandle == NULL) return;
 
     FeeRTOS_ENTER_CRITICAL();
-    temp->SuspendBlocked = false;
+    aTaskHandle->SuspendBlocked = false;
     FeeRTOS_EXIT_CRITICAL();
 }
 
-TTaskInternal* getCurrentTask(void) {
+TFeeRTOS_TaskHandle getCurrentTask(void) {
     return CurrentTask;
+}
+
+TFeeRTOS_TaskHandle getCallbackTask(void) {
+    return CallbackTaskHandle;
 }
 
 __attribute__((used))
@@ -314,8 +284,8 @@ ISR(TCA0_OVF_vect, ISR_NAKED) {
     );
 }
 
-static TTaskInternal* getNextTask(void) {
-    TTaskInternal* temp = TaskListHead;
+static TFeeRTOS_TaskHandle getNextTask(void) {
+    TFeeRTOS_TaskHandle temp = TaskListHead;
     TTaskPriority highestPrioFound = TASK_PRIORITY_IDLE;
 
     // 1. Finde die aktuell höchste Priorität unter allen READY Tasks
@@ -360,15 +330,16 @@ static TTaskInternal* getNextTask(void) {
     return CurrentTask;
 }
 
-static inline bool isReadyToRun(TTaskInternal* task) {
+static inline bool isReadyToRun(TFeeRTOS_TaskHandle task) {
     return !(task->SuspendBlocked || task->DelayBlocked || task->SemaphoreBlocked);
 }
 
 static void IdleTask(void* aUserData) {
+    (void)aUserData;
     while (1) {
         if(TaskListHead->nextTask == NULL) asm volatile("sleep"); // asm volatile("nop");
         // else FeeRTOS_Yield(); // Wenn es einen anderen Task gibt, yielden
-		TTaskInternal* temp = TaskListHead;
+		TFeeRTOS_TaskHandle temp = TaskListHead;
         while(temp != NULL){
             if(isReadyToRun(temp) && temp != CurrentTask) {
                 FeeRTOS_Yield(); // Wenn es einen anderen aktiven Task gibt, yielden
@@ -380,7 +351,7 @@ static void IdleTask(void* aUserData) {
 }
 
 static void DelayCallback(void* args) {
-    TTaskInternal* task = (TTaskInternal*)args;
+    TFeeRTOS_TaskHandle task = (TFeeRTOS_TaskHandle)args;
     FeeRTOS_ENTER_CRITICAL();
     task->DelayBlocked = false;
     FeeRTOS_DeleteTimer(task->DelayTimer);

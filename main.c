@@ -34,15 +34,6 @@ void Task_LedC(void* aUserData){
 	}
 }
 
-TTaskConfig TaskC = {
-	.TaskFunction = Task_LedC,
-	.UserData = 0,
-	.StackSize = 64,
-	.Priority = TASK_PRIORITY_MEDIUM,
-	.NameID = "LedC"
-};
-
-
 int main(void){
 	FeeRTOS_Init();
 
@@ -53,7 +44,7 @@ int main(void){
 	// Periodischer Timer-Callback: toggelt PORTA alle 500ms
 	FeeRTOS_CreateTimer(500, ToggleLedA, NULL, true);
 
-	FeeRTOS_CreateTask(&TaskC);
+	FeeRTOS_CreateTask(Task_LedC, NULL, 64, TASK_PRIORITY_MEDIUM);
 
 	FeeRTOS_StartScheduler();
 

@@ -18,10 +18,10 @@ void FeeRTOS_DeleteSemaphore(TFeeRTOS_SemaphoreHandle aSemaphore){
 
     FeeRTOS_ENTER_CRITICAL();
     // Alle wartenden Tasks freigeben
-    TTaskInternal* task = aSemaphore->WaitingListHead;
+    TFeeRTOS_TaskHandle task = aSemaphore->WaitingListHead;
     while(task != NULL){
         task->SemaphoreBlocked = false;
-        TTaskInternal* next = task->nextWaiting;
+        TFeeRTOS_TaskHandle next = task->nextWaiting;
         task->nextWaiting = NULL;
         task = next;
     }
@@ -41,7 +41,7 @@ void FeeRTOS_SemaphoreTake(TFeeRTOS_SemaphoreHandle aSemaphore){
     }
 
     // Count == 0 -> Task muss warten
-    TTaskInternal* current = getCurrentTask();
+    TFeeRTOS_TaskHandle current = getCurrentTask();
     current->nextWaiting = NULL;
 
     // In Waiting-Liste einhaengen (FIFO)
@@ -65,7 +65,7 @@ void FeeRTOS_SemaphoreGive(TFeeRTOS_SemaphoreHandle aSemaphore){
     FeeRTOS_ENTER_CRITICAL();
     if(aSemaphore->WaitingListHead != NULL){
         // Ersten wartenden Task aufwecken (statt Counter erhoehen)
-        TTaskInternal* task = aSemaphore->WaitingListHead;
+        TFeeRTOS_TaskHandle task = aSemaphore->WaitingListHead;
         task->SemaphoreBlocked = false;
 
         aSemaphore->WaitingListHead = task->nextWaiting;

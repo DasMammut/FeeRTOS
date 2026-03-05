@@ -21,13 +21,7 @@ typedef enum{
     TASK_PRIORITY_CALLBACK
 } TTaskPriority;
 
-typedef struct{
-    void (*TaskFunction)(void* aUserData);
-    void* UserData;
-    uint16_t StackSize;
-    TTaskPriority Priority;
-    char NameID[16];
-} TTaskConfig;
+typedef struct SFeeRTOS_Task* TFeeRTOS_TaskHandle;
 
 #define FeeRTOS_ENTER_CRITICAL() uint8_t sreg_save = SREG; cli()
 #define FeeRTOS_EXIT_CRITICAL() SREG = sreg_save
@@ -47,26 +41,27 @@ void FeeRTOS_Init(void);
  * Allokiert einen eigenen Stack und baut den initialen Kontext
  * (PC, SREG, R0-R31) auf dem Stack auf, sodass der Task beim
  * ersten Context-Switch korrekt gestartet wird.
- * Bei malloc-Fehler wird kein Task erstellt (stille Rueckkehr).
+ * Bei malloc-Fehler wird NULL zurueckgegeben.
  * UserData wird in R24:R25 abgelegt (AVR Calling Convention).
  *
- * aTaskConfig - Zeiger auf eine TTaskConfig-Struktur mit:
- *               TaskFunction: Einsprungpunkt des Tasks
- *               UserData:     Parameter fuer den Task
- *               StackSize:    Stack-Groesse in Bytes
+ * aTaskFunction - Einsprungpunkt des Tasks
+ * aUserData     - Parameter fuer den Task
+ * StackSize     - Stack-Groesse in Bytes
+ * Priority      - Prioritaet des Tasks
+ * Rueckgabewert: Handle auf den erstellten Task oder NULL bei Fehler
  */
-void FeeRTOS_CreateTask(TTaskConfig* aTaskConfig);
+TFeeRTOS_TaskHandle FeeRTOS_CreateTask(void (*aTaskFunction)(void* aUserData), void* aUserData, uint16_t StackSize, TTaskPriority Priority);
 
 /*
  * FeeRTOS_DeleteTask
- * Loescht einen Task anhand seiner ID (Index in der Task-Liste).
+ * Loescht einen Task anhand seines Handles.
  * Gibt den Stack-Speicher frei und verschiebt nachfolgende Tasks.
  * Wenn der aktuell laufende Task sich selbst loescht, wird sofort
  * ein Context-Switch ausgeloest.
  *
- * aTaskID - Index des zu loeschenden Tasks (0 = Idle-Task)
+ * aTaskHandle - Handle des zu loeschenden Tasks
  */
-void FeeRTOS_DeleteTask(char* aTaskNameID);
+void FeeRTOS_DeleteTask(TFeeRTOS_TaskHandle aTaskHandle);
 
 /*
  * FeeRTOS_StartScheduler
@@ -105,13 +100,14 @@ void FeeRTOS_Yield(void);
  */
 void FeeRTOS_Delay(uint16_t aDelayMs);
 
-void FeeRTOS_SuspendTask(char* aTaskNameID);
+void FeeRTOS_SuspendTask(TFeeRTOS_TaskHandle aTaskHandle);
 
-void FeeRTOS_ResumeTask(char* aTaskNameID);
+void FeeRTOS_ResumeTask(TFeeRTOS_TaskHandle aTaskHandle);
 
 // ON the way !!!!
 // Yield umbauen das es keine Verzehrung macht // nicht möglich
-// Tasks auf Handl umstellen Namen -> Handle (Zeiger auf Task-Struktur)
+// Stack auf Handl umstellen
+// FeeRTOS_Heap mit malloc und free
 // FeeRTOS Queues
 // FeeRTOS Mailboxes
 

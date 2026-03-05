@@ -64,7 +64,7 @@ void FeeRTOS_UpdateTimers(){
 	}
 	// CallbackTask NUR wecken wenn mindestens ein Timer abgelaufen ist
 	if(anyOverflow){
-		FeeRTOS_ResumeTask(CALLBACK_TASK_NAME);
+		FeeRTOS_ResumeTask(getCallbackTask());
 	}
 }
 
@@ -90,6 +90,6 @@ void CallbackTask(void* args) {
 			current = next;
 		}
 		FeeRTOS_EXIT_CRITICAL();
-		FeeRTOS_SuspendTask(CALLBACK_TASK_NAME);
+		FeeRTOS_SuspendTask(getCallbackTask());
 	}
 }
