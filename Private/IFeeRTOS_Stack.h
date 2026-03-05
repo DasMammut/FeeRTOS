@@ -5,4 +5,10 @@
 
 #include "IFeeRTOS.h"
 
+typedef struct SFeeRTOS_Stack{
+    void* StackPointer;
+    void* Base;
+    uint16_t Size;
+} TFeeRTOS_Stack;
+
 #endif

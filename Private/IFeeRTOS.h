@@ -18,11 +18,11 @@
 typedef struct SFeeRTOS_Task {
     void (*TaskFunction)(void* aUserData);
     void* UserData;
-    TStack Stack;
+    TFeeRTOS_StackHandle Stack;
     bool SuspendBlocked;
     bool DelayBlocked;
     bool SemaphoreBlocked;
-    TFeeRTOS_Timer* DelayTimer;
+    TFeeRTOS_TimerHandle DelayTimer;
     TTaskPriority Priority;
     struct SFeeRTOS_Task* nextWaiting;
     struct SFeeRTOS_Task* nextTask;

@@ -5,11 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct{
-    void* StackPointer;
-    void* Base;
-    uint16_t Size;
-} TStack;
+typedef struct SFeeRTOS_Stack* TFeeRTOS_StackHandle;
 
 /*
  * Stack_Create
@@ -34,7 +30,7 @@ TStack Stack_Create(uint16_t aSize);
  * aData     - Zeiger auf die zu pushenden Daten
  * aDataSize - Groesse der Daten in Bytes
  */
-void Stack_Push(TStack* aStack, void* aData, uint16_t aDataSize);
+void Stack_Push(TFeeRTOS_StackHandle aStack, void* aData, uint16_t aDataSize);
 
 /*
  * Stack_Pop
@@ -46,7 +42,7 @@ void Stack_Push(TStack* aStack, void* aData, uint16_t aDataSize);
  * aData     - Zeiger auf den Zielpuffer fuer die Daten
  * aDataSize - Groesse der Daten in Bytes
  */
-void Stack_Pop(TStack* aStack, void* aData, uint16_t aDataSize);
+void Stack_Pop(TFeeRTOS_StackHandle aStack, void* aData, uint16_t aDataSize);
 
 /*
  * Stack_Destroy
@@ -55,6 +51,6 @@ void Stack_Pop(TStack* aStack, void* aData, uint16_t aDataSize);
  *
  * aStack - Zeiger auf den Stack der zerstoert werden soll
  */
-void Stack_Destroy(TStack* aStack);
+void Stack_Destroy(TFeeRTOS_StackHandle aStack);
 
 #endif
