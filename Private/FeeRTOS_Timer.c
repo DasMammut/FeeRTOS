@@ -7,8 +7,8 @@ TFeeRTOS_TimerHandle FeeRTOS_CreateTimer(uint32_t aMillis, void (*callback)(void
 	TFeeRTOS_TimerHandle newTimer = (TFeeRTOS_TimerHandle)FeeRTOS_Malloc(sizeof(TFeeRTOS_Timer));
 	if(newTimer == NULL) return NULL;
 	
-	newTimer->TickCounter = 0;
-	newTimer->OverflowTicks = (uint32_t)((aMillis / 1000.0) / TICK_RATE);
+	newTimer->WakeTick = (uint32_t)((aMillis / 1000.0) / TICK_RATE) + TickCount; // Berechnung der Tick-Grenze
+	newTimer->millis = aMillis;
 	newTimer->Overflow = false;
 	newTimer->AutoReload = aAutoReload;
 	newTimer->nextTimer = NULL;
@@ -53,12 +53,11 @@ void FeeRTOS_UpdateTimers(){
 	bool anyOverflow = false;
 	TFeeRTOS_TimerHandle current = TimerListHead;
 	while(current != NULL){
-		if(!current->Overflow){
-			current->TickCounter++;
-			if(current->TickCounter >= current->OverflowTicks){
-				current->Overflow = true;
-				current->TickCounter = 0;
-				anyOverflow = true;
+		if(TickCount >= current->WakeTick){
+			current->Overflow = true;
+			anyOverflow = true;
+			if(current->AutoReload){
+				current->WakeTick += (uint32_t)((current->millis / 1000.0) / TICK_RATE); // naechste Tick-Grenze berechnen
 			}
 		}
 		current = current->nextTimer;

@@ -7,8 +7,8 @@
 #include "FeeRTOS_GLOBALS.h"
 
 typedef struct SFeeRTOS_Timer{
-	uint32_t TickCounter;
-	uint32_t OverflowTicks;
+	uint32_t WakeTick;
+	uint32_t millis;
 	bool Overflow;
 	bool AutoReload;
     void (*Callback)(void* args);

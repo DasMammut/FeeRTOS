@@ -31,4 +31,6 @@ typedef struct TaskInternal {
 
 TTaskInternal* getCurrentTask(void);
 
+volatile uint32_t TickCount;
+
 #endif

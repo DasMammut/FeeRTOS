@@ -256,7 +256,8 @@ static void Schedule(void) {
         TCA0.SINGLE.CNT = ForcedYieldSavedCNT; // Counter wiederherstellen
         ForcedYield = false;
     } 
-    else {
+    else{
+        TickCount++;
         FeeRTOS_UpdateTimers();
     }
 
