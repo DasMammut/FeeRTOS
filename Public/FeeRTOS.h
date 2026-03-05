@@ -94,10 +94,7 @@ void FeeRTOS_ResumeTask(TFeeRTOS_TaskHandle aTaskHandle);
 
 // ON the way !!!!
 // Yield umbauen das es keine Verzehrung macht // nicht möglich
-// FeeRTOS_Heap mit malloc und free
 // FeeRTOS Queues
 // FeeRTOS Mailboxes
-
-// 5
 
 #endif

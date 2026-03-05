@@ -1,6 +1,6 @@
 #include "IFeeRTOS_Stack.h"
 
-TFeeRTOS_StackHandle Stack_Create(uint16_t aSize) {
+TFeeRTOS_StackHandle FeeRTOS_CreateStack(uint16_t aSize) {
 	TFeeRTOS_StackHandle stack = (TFeeRTOS_StackHandle)FeeRTOS_Malloc(sizeof(TFeeRTOS_Stack));
 	if (stack == NULL) return NULL;
 	stack->Base = FeeRTOS_Malloc(aSize);
@@ -15,7 +15,16 @@ TFeeRTOS_StackHandle Stack_Create(uint16_t aSize) {
 	return stack;
 }
 
-void Stack_Push(TFeeRTOS_StackHandle aStack, void* aData, uint16_t aDataSize) {
+void FeeRTOS_DestroyStack(TFeeRTOS_StackHandle aStack){
+    if (aStack == NULL || aStack->Base == NULL) return;
+    FeeRTOS_Free(aStack->Base);
+    aStack->Base = NULL;
+    aStack->StackPointer = NULL;
+    aStack->Size = 0;
+    FeeRTOS_Free(aStack);
+}
+
+void FeeRTOS_StackPush(TFeeRTOS_StackHandle aStack, void* aData, uint16_t aDataSize) {
 	if (aStack == NULL || aStack->Base == NULL) return;
 	uint8_t* sp = (uint8_t*)aStack->StackPointer;
 	uint8_t* base = (uint8_t*)aStack->Base;
@@ -26,7 +35,7 @@ void Stack_Push(TFeeRTOS_StackHandle aStack, void* aData, uint16_t aDataSize) {
 	}
 }
 
-void Stack_Pop(TFeeRTOS_StackHandle aStack, void* aData, uint16_t aDataSize) {
+void FeeRTOS_StackPop(TFeeRTOS_StackHandle aStack, void* aData, uint16_t aDataSize) {
 	if (aStack == NULL || aStack->Base == NULL) return;
 	uint8_t* sp = (uint8_t*)aStack->StackPointer;
 	uint8_t* topLimit = (uint8_t*)aStack->Base + aStack->Size - 1;
@@ -35,13 +44,4 @@ void Stack_Pop(TFeeRTOS_StackHandle aStack, void* aData, uint16_t aDataSize) {
 		sp += aDataSize;
 		aStack->StackPointer = sp;
 	}
-}
-
-void Stack_Destroy(TFeeRTOS_StackHandle aStack){
-    if (aStack == NULL || aStack->Base == NULL) return;
-    FeeRTOS_Free(aStack->Base);
-    aStack->Base = NULL;
-    aStack->StackPointer = NULL;
-    aStack->Size = 0;
-    FeeRTOS_Free(aStack);
 }

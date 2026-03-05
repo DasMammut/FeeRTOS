@@ -18,10 +18,19 @@ typedef struct SFeeRTOS_Stack* TFeeRTOS_StackHandle;
  *
  * Gibt ein TFeeRTOS_StackHandle zurueck oder NULL bei Fehler.
  */
-TFeeRTOS_StackHandle Stack_Create(uint16_t aSize);
+TFeeRTOS_StackHandle FeeRTOS_CreateStack(uint16_t aSize);
 
 /*
- * Stack_Push
+ * FeeRTOS_DestroyStack
+ * Gibt den allokierten Stack-Speicher frei und setzt
+ * Base, SP auf NULL und Size auf 0.
+ *
+ * aStack - Zeiger auf den Stack der zerstoert werden soll
+ */
+void FeeRTOS_DestroyStack(TFeeRTOS_StackHandle aStack);
+
+/*
+ * FeeRTOS_StackPush
  * Schiebt Daten auf den Stack.
  * SP wird um aDataSize nach unten verschoben.
  * Prueft ob genug Platz vorhanden ist.
@@ -30,10 +39,10 @@ TFeeRTOS_StackHandle Stack_Create(uint16_t aSize);
  * aData     - Zeiger auf die zu pushenden Daten
  * aDataSize - Groesse der Daten in Bytes
  */
-void Stack_Push(TFeeRTOS_StackHandle aStack, void* aData, uint16_t aDataSize);
+void FeeRTOS_StackPush(TFeeRTOS_StackHandle aStack, void* aData, uint16_t aDataSize);
 
 /*
- * Stack_Pop
+ * FeeRTOS_StackPop
  * Holt Daten vom Stack.
  * SP wird um aDataSize nach oben verschoben.
  * Prueft ob genug Daten vorhanden sind.
@@ -42,15 +51,7 @@ void Stack_Push(TFeeRTOS_StackHandle aStack, void* aData, uint16_t aDataSize);
  * aData     - Zeiger auf den Zielpuffer fuer die Daten
  * aDataSize - Groesse der Daten in Bytes
  */
-void Stack_Pop(TFeeRTOS_StackHandle aStack, void* aData, uint16_t aDataSize);
+void FeeRTOS_StackPop(TFeeRTOS_StackHandle aStack, void* aData, uint16_t aDataSize);
 
-/*
- * Stack_Destroy
- * Gibt den allokierten Stack-Speicher frei und setzt
- * Base, SP auf NULL und Size auf 0.
- *
- * aStack - Zeiger auf den Stack der zerstoert werden soll
- */
-void Stack_Destroy(TFeeRTOS_StackHandle aStack);
 
 #endif
