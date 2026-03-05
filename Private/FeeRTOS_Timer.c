@@ -2,13 +2,13 @@
 
 static TFeeRTOS_Timer* TimerListHead = NULL;
 
-TFeeRTOS_TimerHandle FeeRTOS_CreateTimer(unsigned long aMillis, void (*callback)(void* args), void* args, bool aAutoReload){
+TFeeRTOS_TimerHandle FeeRTOS_CreateTimer(uint32_t aMillis, void (*callback)(void* args), void* args, bool aAutoReload){
 	if(aMillis == 0) return NULL;
 	TFeeRTOS_TimerHandle newTimer = (TFeeRTOS_TimerHandle)FeeRTOS_Malloc(sizeof(TFeeRTOS_Timer));
 	if(newTimer == NULL) return NULL;
 	
 	newTimer->TickCounter = 0;
-	newTimer->OverflowTicks = (unsigned long)((aMillis / 1000.0) / TICK_RATE);
+	newTimer->OverflowTicks = (uint32_t)((aMillis / 1000.0) / TICK_RATE);
 	newTimer->Overflow = false;
 	newTimer->AutoReload = aAutoReload;
 	newTimer->nextTimer = NULL;

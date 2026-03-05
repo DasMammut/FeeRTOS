@@ -20,16 +20,16 @@ typedef enum{
 	TIMER_PRESCALER_1024
 } TTimerPrescaler;
  
-unsigned int TimerPrescaler[] = {
+uint16_t TimerPrescaler[] = {
 	1, 2, 4, 8, 16, 64, 256, 1024
 };
  
 TTimer Timer[TIMER_NO_LAST] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
  
-static bool TimerInitA_16(unsigned long	aCpuClk, TTimerMode	aTimerMode, float aInterruptTime);
-static bool TimerA_16CalculatePeriod(unsigned long aCpuclk, float aInterruptTime, unsigned int* aPeriod, TTimerPrescaler* aPrescaler);
+static bool TimerInitA_16(uint32_t aCpuClk, TTimerMode aTimerMode, float aInterruptTime);
+static bool TimerA_16CalculatePeriod(uint32_t aCpuclk, float aInterruptTime, uint16_t* aPeriod, TTimerPrescaler* aPrescaler);
  
-bool TimerInit(TTimerNo aTimerNo, unsigned long aCpuClk, TTimerMode aTimerMode, float aInterruptTime){
+bool TimerInit(TTimerNo aTimerNo, uint32_t aCpuClk, TTimerMode aTimerMode, float aInterruptTime){
 	if (aTimerNo >= TIMER_NO_LAST || Timer[aTimerNo] != NULL)
 	return false;
 
@@ -109,8 +109,8 @@ void TimerSetDutyCycle(TTimerNo aTimerNo, TTimerCmpChNo aCmpChannel, float aDuty
 }
 
 
-static bool TimerInitA_16(unsigned long	aCpuClk, TTimerMode	aTimerMode, float aInterruptTime){
-	unsigned int period;
+static bool TimerInitA_16(uint32_t aCpuClk, TTimerMode aTimerMode, float aInterruptTime){
+	uint16_t period;
 	TTimerPrescaler prescaler;
 	if( !TimerA_16CalculatePeriod(aCpuClk, aInterruptTime, &period, &prescaler)) return false;
 	
@@ -134,14 +134,14 @@ static bool TimerInitA_16(unsigned long	aCpuClk, TTimerMode	aTimerMode, float aI
 }
 
 
-static bool TimerA_16CalculatePeriod(unsigned long aCpuclk, float aInterruptTime, unsigned int* aPeriod, TTimerPrescaler* aPrescaler){
+static bool TimerA_16CalculatePeriod(uint32_t aCpuclk, float aInterruptTime, uint16_t* aPeriod, TTimerPrescaler* aPrescaler){
 	if (!aPeriod || !aPrescaler || aInterruptTime <= 0 || aCpuclk == 0)
 	return false;
 
-	unsigned long top;
-	int i;
+	uint32_t top;
+	int8_t i;
 	for (i = 0; i < 8; i++) {
-		top = (unsigned long)((aInterruptTime * aCpuclk) / TimerPrescaler[i]) - 1;
+		top = (uint32_t)((aInterruptTime * aCpuclk) / TimerPrescaler[i]) - 1;
 		if (top <= 65535) break;
 	}
 
@@ -151,7 +151,7 @@ static bool TimerA_16CalculatePeriod(unsigned long aCpuclk, float aInterruptTime
 		return false;
 	}
 
-	*aPeriod = (unsigned int)top;
+	*aPeriod = (uint16_t)top;
 	*aPrescaler = i;
 	return true;
 }

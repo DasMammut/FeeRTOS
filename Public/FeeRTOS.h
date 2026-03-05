@@ -11,6 +11,8 @@
 #ifndef FEERTOS_H
 #define FEERTOS_H
 
+#include <stdint.h>
+
 typedef enum{
     TASK_PRIORITY_IDLE = 0,
     TASK_PRIORITY_LOW,
@@ -22,12 +24,12 @@ typedef enum{
 typedef struct{
     void (*TaskFunction)(void* aUserData);
     void* UserData;
-    unsigned int StackSize;
+    uint16_t StackSize;
     TTaskPriority Priority;
     char NameID[16];
 } TTaskConfig;
 
-#define FeeRTOS_ENTER_CRITICAL() unsigned char sreg_save = SREG; cli()
+#define FeeRTOS_ENTER_CRITICAL() uint8_t sreg_save = SREG; cli()
 #define FeeRTOS_EXIT_CRITICAL() SREG = sreg_save
 
 /*
@@ -84,7 +86,7 @@ void FeeRTOS_StartScheduler(void);
  * size - Anzahl der Bytes, die allokiert werden sollen
  * Rueckgabewert: Zeiger auf den allokierten Speicher oder NULL bei Fehler
  */
-void* FeeRTOS_Malloc(unsigned int size);
+void* FeeRTOS_Malloc(uint16_t size);
 
 /*
  * FeeRTOS_Yield
@@ -101,7 +103,7 @@ void FeeRTOS_Yield(void);
  *
  * aDelayMs - Anzahl der Millisekunden, die der Task blockiert werden soll
  */
-void FeeRTOS_Delay(unsigned int aDelayMs);
+void FeeRTOS_Delay(uint16_t aDelayMs);
 
 void FeeRTOS_SuspendTask(char* aTaskNameID);
 
@@ -109,7 +111,8 @@ void FeeRTOS_ResumeTask(char* aTaskNameID);
 
 // ON the way !!!!
 // Yield umbauen das es keine Verzehrung macht // nicht möglich
-// Stdint verwenden
+// alles mit uiint
+// Timer umbauen (WakeTime)
 // Tasks auf Handl umstellen Namen -> Handle (Zeiger auf Task-Struktur)
 // FeeRTOS Timer verbessern mit Semaphore-Integration (Task blockiert bis Timer abgelaufen ist)
 // FeeRTOS Mutexes

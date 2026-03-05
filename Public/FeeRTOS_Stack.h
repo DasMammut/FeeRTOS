@@ -1,13 +1,14 @@
 #ifndef FEERTOS_STACK_H
 #define FEERTOS_STACK_H
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 typedef struct{
     void* StackPointer;
     void* Base;
-    unsigned int Size;
+    uint16_t Size;
 } TStack;
 
 /*
@@ -21,7 +22,7 @@ typedef struct{
  *
  * Gibt eine TStack-Struktur zurueck. Base pruefen ob NULL!
  */
-TStack Stack_Create(unsigned int aSize);
+TStack Stack_Create(uint16_t aSize);
 
 /*
  * Stack_Push
@@ -33,7 +34,7 @@ TStack Stack_Create(unsigned int aSize);
  * aData     - Zeiger auf die zu pushenden Daten
  * aDataSize - Groesse der Daten in Bytes
  */
-void Stack_Push(TStack* aStack, void* aData, unsigned int aDataSize);
+void Stack_Push(TStack* aStack, void* aData, uint16_t aDataSize);
 
 /*
  * Stack_Pop
@@ -45,7 +46,7 @@ void Stack_Push(TStack* aStack, void* aData, unsigned int aDataSize);
  * aData     - Zeiger auf den Zielpuffer fuer die Daten
  * aDataSize - Groesse der Daten in Bytes
  */
-void Stack_Pop(TStack* aStack, void* aData, unsigned int aDataSize);
+void Stack_Pop(TStack* aStack, void* aData, uint16_t aDataSize);
 
 /*
  * Stack_Destroy

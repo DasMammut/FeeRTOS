@@ -3,11 +3,12 @@
 
 #include "FeeRTOS_Timer.h"
 
+#include <stdint.h>
 #include "FeeRTOS_GLOBALS.h"
 
 typedef struct SFeeRTOS_Timer{
-	unsigned long TickCounter;
-	unsigned long OverflowTicks;
+	uint32_t TickCounter;
+	uint32_t OverflowTicks;
 	bool Overflow;
 	bool AutoReload;
     void (*Callback)(void* args);

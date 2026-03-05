@@ -1,6 +1,8 @@
 #ifndef FEERTOS_SEMAPHORE_H
 #define FEERTOS_SEMAPHORE_H
 
+#include <stdint.h>
+
 typedef struct SFeeRTOS_Semaphore* TFeeRTOS_SemaphoreHandle;
 
 /*
@@ -8,7 +10,7 @@ typedef struct SFeeRTOS_Semaphore* TFeeRTOS_SemaphoreHandle;
  * Erstellt eine Semaphore mit einem Anfangswert und einem Maximalwert.
  * Gibt ein Handle zurueck oder NULL bei Fehler.
  */
-TFeeRTOS_SemaphoreHandle FeeRTOS_CreateSemaphore(int aInitialCount, int aMaxCount);
+TFeeRTOS_SemaphoreHandle FeeRTOS_CreateSemaphore(uint8_t aInitialCount, uint8_t aMaxCount);
 
 /*
  * FeeRTOS_DeleteSemaphore

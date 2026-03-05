@@ -73,21 +73,21 @@ void FeeRTOS_CreateTask(TTaskConfig* aTaskConfig) {
     }
 
     // Initialen Kontext auf den Stack legen (simuliert ISR-Entry + Context Save)
-    unsigned char byte;
+    uint8_t byte;
     uint16_t pc = (uint16_t)(uintptr_t)aTaskConfig->TaskFunction;
-    byte = (unsigned char)(pc & 0xFF); // PC Low-Byte
+    byte = (uint8_t)(pc & 0xFF); // PC Low-Byte
     Stack_Push(&t->Stack, &byte, 1);
-    byte = (unsigned char)((pc >> 8) & 0xFF); // PC High-Byte
+    byte = (uint8_t)((pc >> 8) & 0xFF); // PC High-Byte
     Stack_Push(&t->Stack, &byte, 1);
 
     // R1–R31 (UserData in R24:R25 — AVR Calling Convention)
-    for (unsigned char r = 0; r <= 31 + 1; r++) {
+    for (uint8_t r = 0; r <= 31 + 1; r++) {
         if (r == 1) // SREG // Interupts enabled
             byte = 0x80;
         else if (r == 24 + 1) // R24
-            byte = (unsigned char)((uint16_t)(uintptr_t)aTaskConfig->UserData & 0xFF);
+            byte = (uint8_t)((uint16_t)(uintptr_t)aTaskConfig->UserData & 0xFF);
         else if (r == 25 + 1) // R25
-            byte = (unsigned char)(((uint16_t)(uintptr_t)aTaskConfig->UserData >> 8) & 0xFF);
+            byte = (uint8_t)(((uint16_t)(uintptr_t)aTaskConfig->UserData >> 8) & 0xFF);
         else
             byte = 0x00;
         Stack_Push(&t->Stack, &byte, 1);
@@ -173,7 +173,7 @@ void FeeRTOS_StartScheduler(void) {
     __builtin_unreachable(); // Compiler info dass diese Funktion nie zurückkehrt
 }
 
-void* FeeRTOS_Malloc(unsigned int size) {
+void* FeeRTOS_Malloc(uint16_t size) {
     FeeRTOS_ENTER_CRITICAL();
 
     if (SchedulerRunning) {
@@ -203,7 +203,7 @@ void FeeRTOS_Yield(void) {
     asm volatile("nop");
 }
 
-void FeeRTOS_Delay(unsigned int aDelayMs) {
+void FeeRTOS_Delay(uint16_t aDelayMs) {
     FeeRTOS_ENTER_CRITICAL();
     CurrentTask->DelayTimer = FeeRTOS_CreateTimer(aDelayMs, DelayCallback, CurrentTask, false);
     if(CurrentTask->DelayTimer == NULL) {

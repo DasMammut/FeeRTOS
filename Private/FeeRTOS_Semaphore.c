@@ -1,13 +1,13 @@
 #include "IFeeRTOS.h"
 
-TFeeRTOS_SemaphoreHandle FeeRTOS_CreateSemaphore(int aInitialCount, int aMaxCount) {
-    if(aInitialCount < 0 || aMaxCount <= 0 || aInitialCount > aMaxCount) return NULL;
+TFeeRTOS_SemaphoreHandle FeeRTOS_CreateSemaphore(uint8_t aInitialCount, uint8_t aMaxCount) {
+    if(aMaxCount == 0 || aInitialCount > aMaxCount) return NULL;
 
     TFeeRTOS_SemaphoreHandle semaphore = (TFeeRTOS_SemaphoreHandle)FeeRTOS_Malloc(sizeof(TFeeRTOS_Semaphore));
     if(semaphore == NULL) return NULL;
 
-    semaphore->Count = (uint8_t)aInitialCount;
-    semaphore->MaxCount = (uint8_t)aMaxCount;
+    semaphore->Count = aInitialCount;
+    semaphore->MaxCount = aMaxCount;
     semaphore->WaitingListHead = NULL;
     semaphore->WaitingListTail = NULL;
     return semaphore;

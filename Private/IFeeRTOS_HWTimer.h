@@ -1,6 +1,7 @@
 #ifndef TIMER_H
 #define TIMER_H
 
+#include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,7 +46,7 @@ typedef void (*TTimerFunction)(void* aUserData);
  * Gibt true zurueck wenn erfolgreich, false bei Fehler oder wenn
  * der Timer bereits initialisiert ist.
  */
-bool TimerInit(TTimerNo aTimerNo, unsigned long aCpuClk, TTimerMode aTimerMode, float aInterruptTime);
+bool TimerInit(TTimerNo aTimerNo, uint32_t aCpuClk, TTimerMode aTimerMode, float aInterruptTime);
 
 /*
  * TimerDone
