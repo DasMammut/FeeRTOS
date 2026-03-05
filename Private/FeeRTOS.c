@@ -34,9 +34,9 @@ TFeeRTOS_TaskHandle FeeRTOS_CreateTask(void (*aTaskFunction)(void* aUserData), v
     t->UserData = aUserData;
     t->Stack = FeeRTOS_CreateStack(StackSize);
     t->nextTask = NULL;
-    t->SuspendBlocked = false;
-    t->DelayBlocked = false;
-    t->SemaphoreBlocked = false;
+    t->BlockedFlags.Suspend = false;
+    t->BlockedFlags.Delay = false;
+    t->BlockedFlags.Semaphore = false;
     t->DelayTimer = NULL;
     t->Priority = Priority;
     t->nextWaiting = NULL;
@@ -170,7 +170,7 @@ void FeeRTOS_Delay(uint16_t aDelayMs) {
         FeeRTOS_EXIT_CRITICAL();
         return; // malloc fehlgeschlagen, nicht blockieren
     }
-    CurrentTask->DelayBlocked = true;
+    CurrentTask->BlockedFlags.Delay = true;
     FeeRTOS_EXIT_CRITICAL();
     FeeRTOS_Yield();
 }
@@ -179,7 +179,7 @@ void FeeRTOS_SuspendTask(TFeeRTOS_TaskHandle aTaskHandle){
     if(aTaskHandle == NULL) return;
 
     FeeRTOS_ENTER_CRITICAL();
-    aTaskHandle->SuspendBlocked = true;
+    aTaskHandle->BlockedFlags.Suspend = true;
     FeeRTOS_EXIT_CRITICAL();
     if(aTaskHandle == CurrentTask) FeeRTOS_Yield();
 }
@@ -188,7 +188,7 @@ void FeeRTOS_ResumeTask(TFeeRTOS_TaskHandle aTaskHandle){
 	if(aTaskHandle == NULL) return;
 
     FeeRTOS_ENTER_CRITICAL();
-    aTaskHandle->SuspendBlocked = false;
+    aTaskHandle->BlockedFlags.Suspend = false;
     FeeRTOS_EXIT_CRITICAL();
 }
 
@@ -313,7 +313,7 @@ static TFeeRTOS_TaskHandle getNextTask(void) {
 }
 
 static inline bool isReadyToRun(TFeeRTOS_TaskHandle task) {
-    return !(task->SuspendBlocked || task->DelayBlocked || task->SemaphoreBlocked);
+    return !task->BlockedFlags.All; // Alle Blockade-Flags müssen 0 sein, damit der Task ready ist
 }
 
 static void IdleTask(void* aUserData) {
@@ -335,7 +335,7 @@ static void IdleTask(void* aUserData) {
 static void DelayCallback(void* args) {
     TFeeRTOS_TaskHandle task = (TFeeRTOS_TaskHandle)args;
     FeeRTOS_ENTER_CRITICAL();
-    task->DelayBlocked = false;
+    task->BlockedFlags.Delay = false;
     FeeRTOS_DeleteTimer(task->DelayTimer);
     task->DelayTimer = NULL;
     FeeRTOS_EXIT_CRITICAL();

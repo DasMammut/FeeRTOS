@@ -20,7 +20,7 @@ void FeeRTOS_DeleteSemaphore(TFeeRTOS_SemaphoreHandle aSemaphore){
     // Alle wartenden Tasks freigeben
     TFeeRTOS_TaskHandle task = aSemaphore->WaitingListHead;
     while(task != NULL){
-        task->SemaphoreBlocked = false;
+        task->BlockedFlags.Semaphore = false;
         TFeeRTOS_TaskHandle next = task->nextWaiting;
         task->nextWaiting = NULL;
         task = next;
@@ -54,7 +54,7 @@ void FeeRTOS_SemaphoreTake(TFeeRTOS_SemaphoreHandle aSemaphore){
     aSemaphore->WaitingListTail = current;
 
     // Task blockieren
-    current->SemaphoreBlocked = true;
+    current->BlockedFlags.Semaphore = true;
     FeeRTOS_EXIT_CRITICAL();
     FeeRTOS_Yield();
 }
@@ -66,7 +66,7 @@ void FeeRTOS_SemaphoreGive(TFeeRTOS_SemaphoreHandle aSemaphore){
     if(aSemaphore->WaitingListHead != NULL){
         // Ersten wartenden Task aufwecken (statt Counter erhoehen)
         TFeeRTOS_TaskHandle task = aSemaphore->WaitingListHead;
-        task->SemaphoreBlocked = false;
+        task->BlockedFlags.Semaphore = false;
 
         aSemaphore->WaitingListHead = task->nextWaiting;
         task->nextWaiting = NULL;

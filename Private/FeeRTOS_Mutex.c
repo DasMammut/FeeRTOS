@@ -44,7 +44,7 @@ void FeeRTOS_MutexLock(TFeeRTOS_MutexHandle aMutex){
     }
     
     currentTask->nextWaiting = NULL;
-    currentTask->SemaphoreBlocked = true; // Task schlafen legen
+    currentTask->BlockedFlags.Semaphore = true; // Task schlafen legen
     
     FeeRTOS_EXIT_CRITICAL();
     FeeRTOS_Yield(); 
@@ -75,7 +75,7 @@ void FeeRTOS_MutexUnlock(TFeeRTOS_MutexHandle aMutex){
     TFeeRTOS_TaskHandle nextTask = aMutex->WaitingListHead;
     aMutex->WaitingListHead = nextTask->nextWaiting;
     nextTask->nextWaiting = NULL;
-    nextTask->SemaphoreBlocked = false;
+    nextTask->BlockedFlags.Semaphore = false;
     aMutex->Owner = nextTask;
     aMutex->Count++;
     FeeRTOS_EXIT_CRITICAL();
