@@ -93,8 +93,12 @@ void FeeRTOS_SuspendTask(TFeeRTOS_TaskHandle aTaskHandle);
 void FeeRTOS_ResumeTask(TFeeRTOS_TaskHandle aTaskHandle);
 
 // ON the way !!!!
+
 // Yield umbauen das es keine Verzehrung macht // nicht möglich
-// FeeRTOS Queues
 // FeeRTOS Mailboxes
+// Mutexes
+// Event Groups
+
+// Kommentare
 
 #endif

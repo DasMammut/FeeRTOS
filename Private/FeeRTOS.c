@@ -32,7 +32,7 @@ TFeeRTOS_TaskHandle FeeRTOS_CreateTask(void (*aTaskFunction)(void* aUserData), v
 
     t->TaskFunction = aTaskFunction;
     t->UserData = aUserData;
-    t->Stack = Stack_Create(StackSize);
+    t->Stack = FeeRTOS_CreateStack(StackSize);
     t->nextTask = NULL;
     t->SuspendBlocked = false;
     t->DelayBlocked = false;
@@ -61,9 +61,9 @@ TFeeRTOS_TaskHandle FeeRTOS_CreateTask(void (*aTaskFunction)(void* aUserData), v
     uint8_t byte;
     uint16_t pc = (uint16_t)(uintptr_t)aTaskFunction;
     byte = (uint8_t)(pc & 0xFF); // PC Low-Byte
-    Stack_Push(t->Stack, &byte, 1);
+    FeeRTOS_StackPush(t->Stack, &byte, 1);
     byte = (uint8_t)((pc >> 8) & 0xFF); // PC High-Byte
-    Stack_Push(t->Stack, &byte, 1);
+    FeeRTOS_StackPush(t->Stack, &byte, 1);
 
     // R1–R31 (UserData in R24:R25 — AVR Calling Convention)
     for (uint8_t r = 0; r <= 31 + 1; r++) {
@@ -75,7 +75,7 @@ TFeeRTOS_TaskHandle FeeRTOS_CreateTask(void (*aTaskFunction)(void* aUserData), v
             byte = (uint8_t)(((uint16_t)(uintptr_t)aUserData >> 8) & 0xFF);
         else
             byte = 0x00;
-        Stack_Push(t->Stack, &byte, 1);
+        FeeRTOS_StackPush(t->Stack, &byte, 1);
     }
     FeeRTOS_EXIT_CRITICAL();
     return t;
@@ -91,7 +91,7 @@ void FeeRTOS_DeleteTask(TFeeRTOS_TaskHandle aTaskHandle) {
         aTaskHandle->DelayTimer = NULL;
     }
 
-    Stack_Destroy(aTaskHandle->Stack);
+    FeeRTOS_DestroyStack(aTaskHandle->Stack);
 
     bool isCurrentTask = (aTaskHandle == CurrentTask);
 
