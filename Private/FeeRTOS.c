@@ -40,7 +40,7 @@ TFeeRTOS_TaskHandle FeeRTOS_CreateTask(void (*aTaskFunction)(void* aUserData), v
     t->DelayTimer = NULL;
     t->Priority = Priority;
     t->nextWaiting = NULL;
-    if (t->Stack.Base == NULL) {
+    if (t->Stack == NULL) {
         free(t);
         return NULL;
     }
@@ -61,9 +61,9 @@ TFeeRTOS_TaskHandle FeeRTOS_CreateTask(void (*aTaskFunction)(void* aUserData), v
     uint8_t byte;
     uint16_t pc = (uint16_t)(uintptr_t)aTaskFunction;
     byte = (uint8_t)(pc & 0xFF); // PC Low-Byte
-    Stack_Push(&t->Stack, &byte, 1);
+    Stack_Push(t->Stack, &byte, 1);
     byte = (uint8_t)((pc >> 8) & 0xFF); // PC High-Byte
-    Stack_Push(&t->Stack, &byte, 1);
+    Stack_Push(t->Stack, &byte, 1);
 
     // R1–R31 (UserData in R24:R25 — AVR Calling Convention)
     for (uint8_t r = 0; r <= 31 + 1; r++) {
@@ -75,7 +75,7 @@ TFeeRTOS_TaskHandle FeeRTOS_CreateTask(void (*aTaskFunction)(void* aUserData), v
             byte = (uint8_t)(((uint16_t)(uintptr_t)aUserData >> 8) & 0xFF);
         else
             byte = 0x00;
-        Stack_Push(&t->Stack, &byte, 1);
+        Stack_Push(t->Stack, &byte, 1);
     }
     FeeRTOS_EXIT_CRITICAL();
     return t;
@@ -91,7 +91,7 @@ void FeeRTOS_DeleteTask(TFeeRTOS_TaskHandle aTaskHandle) {
         aTaskHandle->DelayTimer = NULL;
     }
 
-    Stack_Destroy(&aTaskHandle->Stack);
+    Stack_Destroy(aTaskHandle->Stack);
 
     bool isCurrentTask = (aTaskHandle == CurrentTask);
 
@@ -124,7 +124,7 @@ void FeeRTOS_StartScheduler(void) {
 
     FeeRTOS_ENTER_CRITICAL();
 
-    SavedSP = (uint16_t)(uintptr_t)CurrentTask->Stack.StackPointer;
+    SavedSP = (uint16_t)(uintptr_t)CurrentTask->Stack->StackPointer;
 
     asm volatile(
         "lds  r16, SavedSP      \n\t"
@@ -220,7 +220,7 @@ TFeeRTOS_TaskHandle getCallbackTask(void) {
 
 __attribute__((used))
 static void Schedule(void) {
-    CurrentTask->Stack.StackPointer = (void*)(uintptr_t)SavedSP;
+    CurrentTask->Stack->StackPointer = (void*)(uintptr_t)SavedSP;
 
     if (ForcedYield) {
         TCA0.SINGLE.CNT = ForcedYieldSavedCNT; // Counter wiederherstellen
@@ -233,7 +233,7 @@ static void Schedule(void) {
 
     CurrentTask = getNextTask();
 
-    SavedSP = (uint16_t)(uintptr_t)CurrentTask->Stack.StackPointer;
+    SavedSP = (uint16_t)(uintptr_t)CurrentTask->Stack->StackPointer;
 
     TCA0.SINGLE.INTFLAGS = TCA_SINGLE_OVF_bm;
 }

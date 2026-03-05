@@ -16,9 +16,9 @@ typedef struct SFeeRTOS_Stack* TFeeRTOS_StackHandle;
  *
  * aSize - Groesse des Stacks in Bytes
  *
- * Gibt eine TStack-Struktur zurueck. Base pruefen ob NULL!
+ * Gibt ein TFeeRTOS_StackHandle zurueck oder NULL bei Fehler.
  */
-TStack Stack_Create(uint16_t aSize);
+TFeeRTOS_StackHandle Stack_Create(uint16_t aSize);
 
 /*
  * Stack_Push

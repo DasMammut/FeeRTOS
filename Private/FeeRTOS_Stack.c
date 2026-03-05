@@ -45,4 +45,3 @@ void Stack_Destroy(TFeeRTOS_StackHandle aStack){
     aStack->Size = 0;
     free(aStack);
 }
-}
