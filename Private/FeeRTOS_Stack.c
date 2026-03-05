@@ -16,11 +16,8 @@ TFeeRTOS_StackHandle FeeRTOS_CreateStack(uint16_t aSize) {
 }
 
 void FeeRTOS_DestroyStack(TFeeRTOS_StackHandle aStack){
-    if (aStack == NULL || aStack->Base == NULL) return;
+    if (aStack == NULL) return;
     FeeRTOS_Free(aStack->Base);
-    aStack->Base = NULL;
-    aStack->StackPointer = NULL;
-    aStack->Size = 0;
     FeeRTOS_Free(aStack);
 }
 

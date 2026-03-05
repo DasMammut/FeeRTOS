@@ -27,6 +27,7 @@ TFeeRTOS_RingbufferHandle FeeRTOS_CreateRingbuffer(uint16_t aBufferSize, uint8_t
 }
 
 void FeeRTOS_DestroyRingbuffer(TFeeRTOS_RingbufferHandle aRingbuffer) {
+	if(aRingbuffer == NULL) return
 	FeeRTOS_Free(aRingbuffer->Buffer);
 	FeeRTOS_Free(aRingbuffer);
 }

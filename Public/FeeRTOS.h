@@ -95,10 +95,11 @@ void FeeRTOS_ResumeTask(TFeeRTOS_TaskHandle aTaskHandle);
 // ON the way !!!!
 
 // Yield umbauen das es keine Verzehrung macht // nicht möglich
-// FeeRTOS Mailboxes
-// Mutexes
 // Event Groups
+// Mutexes mit Prioritaetsvererbung
 
+// Task bits falgs optimieren (union)
+// Structs memory optimierung
 // Kommentare
 
 #endif
