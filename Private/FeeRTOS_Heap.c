@@ -21,14 +21,19 @@ void FeeRTOS_InitHeap(void) {
 void* FeeRTOS_Malloc(size_t size) {
     if (size == 0 || size > FreeBytes) return NULL;
 
+    FeeRTOS_ENTER_CRITICAL();
+
     if(BlockListHead == NULL || BlockListTail == NULL) FeeRTOS_InitHeap();
 
     size = (size + 1) & ~1; // Aufrunden auf nächstes Vielfaches von 2
 
     TFeeRTOS_HeapBlock* current = findSmallestMatch(size);
-    if(current == NULL) return NULL; // Kein passender Block gefunden
+    if(current == NULL) {
+        FeeRTOS_EXIT_CRITICAL();
+        return NULL;
+    }
 
-    if (current->Size > size) {
+    if (current->Size >= size + HeapHeaderSize + 2) { // Genug Platz für Aufteilung (mind. 2 Bytes im Restblock)
         // Block aufteilen
         TFeeRTOS_HeapBlock* newBlock = (TFeeRTOS_HeapBlock*)(((uint8_t*)current) + HeapHeaderSize + size);
         newBlock->Size = current->Size - size - HeapHeaderSize;
@@ -51,12 +56,15 @@ void* FeeRTOS_Malloc(size_t size) {
     }
     FreeBytes -= current->Size;
 
+    FeeRTOS_EXIT_CRITICAL();
     return (uint8_t*)current + HeapHeaderSize;
 
 }
 
 void FeeRTOS_Free(void* ptr) {
     if (ptr == NULL) return;
+
+    FeeRTOS_ENTER_CRITICAL();
 
     TFeeRTOS_HeapBlock* current = BlockListHead;
     TFeeRTOS_HeapBlock* previous = NULL;
@@ -67,12 +75,17 @@ void FeeRTOS_Free(void* ptr) {
         previous = current;
         current = current->Next;
     }
-    if (current == NULL) return; // Ungültiger Pointer
+    if (current == NULL) {
+        FeeRTOS_EXIT_CRITICAL();
+        return; // Ungültiger Pointer
+    }
 
     current->IsFree = true;
     FreeBytes += current->Size;
 
     mergeBlocks(current, previous);
+
+    FeeRTOS_EXIT_CRITICAL();
 }
 
 
@@ -82,6 +95,7 @@ static inline TFeeRTOS_HeapBlock* findSmallestMatch(size_t size) {
     TFeeRTOS_HeapBlock* current = BlockListHead;
     TFeeRTOS_HeapBlock* bestFit = NULL;
 
+    #ifndef ALLOW_INTERNAL_FRAGMENTATION
     while (current != NULL) {
         if (current->IsFree && (current->Size >= size + HeapHeaderSize + 2 || current->Size == size)) {
             if (bestFit == NULL || current->Size < bestFit->Size) {
@@ -90,6 +104,18 @@ static inline TFeeRTOS_HeapBlock* findSmallestMatch(size_t size) {
         }
         current = current->Next;
     }
+    #endif
+    #ifdef ALLOW_INTERNAL_FRAGMENTATION
+    while (current != NULL) {
+        if (current->IsFree && current->Size >= size) {
+            if (bestFit == NULL || current->Size < bestFit->Size) {
+                bestFit = current;
+            }
+        }
+        current = current->Next;
+    }
+    #endif
+
     return bestFit;
 }
 

@@ -8,4 +8,6 @@
 
 #define HEAP_SIZE 2048
 
+#define ALLOW_INTERNAL_FRAGMENTATION // Comment out to save RAM at cost of potentially more fragmentation
+
 #endif
