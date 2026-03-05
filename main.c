@@ -6,49 +6,50 @@
 
 #include "FeeRTOS.h"
 #include "FeeRTOS_Timer.h"
+#include "FeeRTOS_Mutex.h"
 
-/*
- * Timer-Callback Test:
- * - TimerCallback toggelt PORTA (LEDs) alle 500ms per Callback-Timer
- * - Task_LedC toggelt PORTC alle 300ms per FeeRTOS_Delay (testet Delay mit neuem Timer)
- *
- * Erwartetes Verhalten:
- *   - PORTA blinkt im 500ms-Takt (gesteuert durch Timer-Callback, OHNE eigenen Task)
- *   - PORTC blinkt im 300ms-Takt (gesteuert durch Delay in eigenem Task)
- *   - Beide unabhaengig voneinander
- */
+// Globaler Mutex-Handle
+TFeeRTOS_MutexHandle gLedMutex;
 
-// Timer-Callback: wird vom CallbackTask aufgerufen wenn der Timer ablaeuft
-void ToggleLedA(void* args) {
-	(void)args;
-	PORTA.OUTTGL = 0xFF;
+// Task 1: toggelt PORTB mit Mutex
+void Task_LedB(void* aUserData){
+    (void)aUserData;
+    PORTA.DIRSET = 0xFF;
+    while (1){
+        FeeRTOS_MutexLock(gLedMutex);
+        PORTA.OUTTGL = 0xFF;
+        FeeRTOS_Delay(500);
+        PORTA.OUTTGL = 0xFF;
+        FeeRTOS_MutexUnlock(gLedMutex);
+    }
 }
 
-// Normaler Task: testet FeeRTOS_Delay (nutzt intern auch den neuen Timer + Callback)
-void Task_LedC(void* aUserData){
-	(void)aUserData;
-	PORTC.DIRSET = 0xFF;
-	while (1){
-		PORTC.OUTTGL = 0xFF;
-		FeeRTOS_Delay(300);
-	}
+// Task 2: toggelt PORTC mit Mutex
+void Task_LedC_Mutex(void* aUserData){
+    (void)aUserData;
+    PORTC.DIRSET = 0xFF;
+    while (1){
+        FeeRTOS_MutexLock(gLedMutex);
+        PORTC.OUTTGL = 0xFF;
+        FeeRTOS_Delay(500);
+        PORTC.OUTTGL = 0xFF;
+        FeeRTOS_MutexUnlock(gLedMutex);
+    }
 }
 
 int main(void){
-	FeeRTOS_Init();
+    FeeRTOS_Init();
 
-	// PORTA als Ausgang konfigurieren (fuer Timer-Callback)
-	PORTA.DIRSET = 0xFF;
-	PORTA.OUTCLR = 0xFF;
+    // Mutex erzeugen
+    gLedMutex = FeeRTOS_CreateMutex();
 
-	// Periodischer Timer-Callback: toggelt PORTA alle 500ms
-	FeeRTOS_CreateTimer(500, ToggleLedA, NULL, true);
+    // Tasks mit Mutex
+    FeeRTOS_CreateTask(Task_LedB, NULL, 64, TASK_PRIORITY_MEDIUM);
+    FeeRTOS_CreateTask(Task_LedC_Mutex, NULL, 64, TASK_PRIORITY_MEDIUM);
 
-	FeeRTOS_CreateTask(Task_LedC, NULL, 64, TASK_PRIORITY_MEDIUM);
+    FeeRTOS_StartScheduler();
 
-	FeeRTOS_StartScheduler();
-
-	while(1){
-	}
-	return 0;
+    while(1){
+    }
+    return 0;
 }

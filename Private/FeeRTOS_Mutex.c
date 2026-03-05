@@ -18,28 +18,36 @@ void FeeRTOS_MutexLock(TFeeRTOS_MutexHandle aMutex){
     if(aMutex == NULL) return;
     TFeeRTOS_TaskHandle currentTask = getCurrentTask();
     FeeRTOS_ENTER_CRITICAL();
-    if(aMutex->Count == 0){
+    
+    if(aMutex->Count == 0 || aMutex->Owner == currentTask){
         aMutex->Owner = currentTask;
         aMutex->Count++;
         FeeRTOS_EXIT_CRITICAL();
         return;
     }
-    if(aMutex->Owner == currentTask){
-        aMutex->Count++;
-        FeeRTOS_EXIT_CRITICAL();
-        return;
+    
+    // In Warteliste einreihen
+    if(aMutex->WaitingListHead == NULL) {
+        // Fall A: Liste war leer -> Task wird das neue Oberhaupt
+        aMutex->WaitingListHead = currentTask;
+    } else {
+        // Fall B: Liste nicht leer -> ans Ende laufen
+        TFeeRTOS_TaskHandle temp = aMutex->WaitingListHead;
+        while(temp->nextWaiting != NULL){
+            if(temp == currentTask) { // Sicherheit: Schon drin?
+                FeeRTOS_EXIT_CRITICAL();
+                return;
+            }
+            temp = temp->nextWaiting;
+        }
+        temp->nextWaiting = currentTask;
     }
     
-    TFeeRTOS_TaskHandle waitingTask = aMutex->WaitingListHead;
-    while(waitingTask->nextWaiting != NULL){
-        if(waitingTask == currentTask) break; // Task ist bereits in der Warteliste
-        waitingTask = waitingTask->nextWaiting;
-    }
-    waitingTask->nextWaiting = currentTask;
     currentTask->nextWaiting = NULL;
-    currentTask->SemaphoreBlocked = true;
+    currentTask->SemaphoreBlocked = true; // Task schlafen legen
+    
     FeeRTOS_EXIT_CRITICAL();
-    FeeRTOS_Yield();
+    FeeRTOS_Yield(); 
 }
 
 void FeeRTOS_MutexUnlock(TFeeRTOS_MutexHandle aMutex){
@@ -57,14 +65,18 @@ void FeeRTOS_MutexUnlock(TFeeRTOS_MutexHandle aMutex){
         return; // Es gibt noch weitere Sperren, daher nicht freigeben
     }
 
-    aMutex->Owner = NULL;
+    if(aMutex->WaitingListHead == NULL) {
+        aMutex->Owner = NULL; // Kein wartender Task, Mutex freigeben
+        FeeRTOS_EXIT_CRITICAL();
+        return;
+    }
 
     // Nächsten wartenden Task freigeben
-    if(aMutex->WaitingListHead != NULL){
-        TFeeRTOS_TaskHandle nextTask = aMutex->WaitingListHead;
-        aMutex->WaitingListHead = nextTask->nextWaiting;
-        nextTask->nextWaiting = NULL;
-        nextTask->SemaphoreBlocked = false;
-    }
+    TFeeRTOS_TaskHandle nextTask = aMutex->WaitingListHead;
+    aMutex->WaitingListHead = nextTask->nextWaiting;
+    nextTask->nextWaiting = NULL;
+    nextTask->SemaphoreBlocked = false;
+    aMutex->Owner = nextTask;
+    aMutex->Count++;
     FeeRTOS_EXIT_CRITICAL();
 }
