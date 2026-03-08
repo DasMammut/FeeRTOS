@@ -96,10 +96,10 @@ void FeeRTOS_ResumeTask(TFeeRTOS_TaskHandle aTaskHandle);
 
 // Yield umbauen das es keine Verzehrung macht // nicht möglich
 
-// Event Groups
 // Mutexes mit Prioritaetsvererbung
 
 // Structs memory optimierung
+// ISR und Hardware code trennen von Kernel code
 // Kommentare
 
 #endif

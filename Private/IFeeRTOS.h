@@ -22,7 +22,7 @@ typedef union UTaskBlockedFlags {
         bool Delay : 1;
         bool Semaphore : 1;
     };
-    uint8_t All;
+    bool All;
 } TTaskBlockedFlags;
 
 typedef struct SFeeRTOS_Task {
@@ -32,6 +32,7 @@ typedef struct SFeeRTOS_Task {
     TTaskBlockedFlags BlockedFlags;
     TFeeRTOS_TimerHandle DelayTimer;
     TTaskPriority Priority;
+    TTaskPriority BasePriority; // Für Prioritätsvererbung
     struct SFeeRTOS_Task* nextWaiting;
     struct SFeeRTOS_Task* nextTask;
 } TFeeRTOS_Task;

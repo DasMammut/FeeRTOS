@@ -39,6 +39,7 @@ TFeeRTOS_TaskHandle FeeRTOS_CreateTask(void (*aTaskFunction)(void* aUserData), v
     t->BlockedFlags.Semaphore = false;
     t->DelayTimer = NULL;
     t->Priority = Priority;
+    t->BasePriority = Priority; // Für Prioritätsvererbung
     t->nextWaiting = NULL;
     if (t->Stack == NULL) {
         FeeRTOS_Free(t);

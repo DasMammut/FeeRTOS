@@ -42,6 +42,11 @@ void FeeRTOS_MutexLock(TFeeRTOS_MutexHandle aMutex){
         }
         temp->nextWaiting = currentTask;
     }
+
+    //Prioritätsvererbung
+    if(currentTask->Priority > aMutex->Owner->Priority) {
+        aMutex->Owner->Priority = currentTask->Priority;
+    }
     
     currentTask->nextWaiting = NULL;
     currentTask->BlockedFlags.Semaphore = true; // Task schlafen legen
@@ -71,6 +76,7 @@ void FeeRTOS_MutexUnlock(TFeeRTOS_MutexHandle aMutex){
         return;
     }
 
+    aMutex->Owner->Priority = aMutex->Owner->BasePriority; // Prioritätsvererbung zurücksetzen
     // Nächsten wartenden Task freigeben
     TFeeRTOS_TaskHandle nextTask = aMutex->WaitingListHead;
     aMutex->WaitingListHead = nextTask->nextWaiting;
@@ -78,5 +84,15 @@ void FeeRTOS_MutexUnlock(TFeeRTOS_MutexHandle aMutex){
     nextTask->BlockedFlags.Semaphore = false;
     aMutex->Owner = nextTask;
     aMutex->Count++;
+    // neue Prioritätsvererbung prüfen
+    TFeeRTOS_TaskHandle temp = aMutex->WaitingListHead;
+    while(temp != NULL) {
+        if(temp->Priority > aMutex->Owner->Priority) {
+            aMutex->Owner->Priority = temp->Priority;
+        }
+        temp = temp->nextWaiting;
+    }
+    
+
     FeeRTOS_EXIT_CRITICAL();
 }
