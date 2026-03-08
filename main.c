@@ -11,8 +11,8 @@
 // Globaler Mutex-Handle
 TFeeRTOS_MutexHandle gLedMutex;
 
-// Task 1: toggelt PORTB mit Mutex
-void Task_LedB(void* aUserData){
+// Task 1: toggelt PORTA mit Mutex
+void Task_LedA(void* aUserData){
     (void)aUserData;
     PORTA.DIRSET = 0xFF;
     while (1){
@@ -44,7 +44,7 @@ int main(void){
     gLedMutex = FeeRTOS_CreateMutex();
 
     // Tasks mit Mutex
-    FeeRTOS_CreateTask(Task_LedB, NULL, 64, TASK_PRIORITY_MEDIUM);
+    FeeRTOS_CreateTask(Task_LedA, NULL, 64, TASK_PRIORITY_MEDIUM);
     FeeRTOS_CreateTask(Task_LedC_Mutex, NULL, 64, TASK_PRIORITY_MEDIUM);
 
     FeeRTOS_StartScheduler();
