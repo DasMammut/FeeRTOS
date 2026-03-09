@@ -3,10 +3,23 @@
 
 #define TICK_RATE 1e-3
 
+/**
+ * Stack-Groesse des Idle-Tasks in Bytes
+ */
 #define IDLE_TASK_STACK_SIZE 128
+/**
+ * Stack-Groesse des Callback-Tasks in Bytes
+ */
 #define CALLBACK_TASK_STACK_SIZE 128
 
+/**
+ * Heap-Groesse in Bytes
+ */
 #define HEAP_SIZE 5120
+/**
+ * Erlaubt interne Fragmentierung im Heap
+ * Auskommentieren spart RAM, kann aber zu mehr Fragmentierung fuehren
+ */
 #define ALLOW_INTERNAL_FRAGMENTATION // Comment out to save RAM at cost of potentially more fragmentation
 
 #endif

@@ -7,20 +7,19 @@
 
 typedef struct SFeeRTOS_Stack* TFeeRTOS_StackHandle;
 
-/*
- * Stack_Create
+/**
+ * FeeRTOS_CreateStack
  * Erstellt einen neuen Stack mit der angegebenen Groesse.
  * Allokiert Speicher mit malloc. SP zeigt initial auf das
  * oberste Byte des allokierten Bereichs (Base + Size - 1).
  * Bei malloc-Fehler: Base=NULL, SP=NULL, Size=0.
  *
  * aSize - Groesse des Stacks in Bytes
- *
  * Gibt ein TFeeRTOS_StackHandle zurueck oder NULL bei Fehler.
  */
 TFeeRTOS_StackHandle FeeRTOS_CreateStack(uint16_t aSize);
 
-/*
+/**
  * FeeRTOS_DestroyStack
  * Gibt den allokierten Stack-Speicher frei und setzt
  * Base, SP auf NULL und Size auf 0.
