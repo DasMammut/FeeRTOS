@@ -1,7 +1,7 @@
 #ifndef I_FEERTOS_EVENTGROUP_H
 #define I_FEERTOS_EVENTGROUP_H
 
-#include "FeeRTOS_EventGroup.h"
+#include "FeeRTOS_Eventgroup.h"
 #include "IFeeRTOS.h"
 #include "IFeeRTOS_Heap.h"
 
