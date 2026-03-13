@@ -18,11 +18,11 @@
 
 typedef union UTaskBlockedFlags {
     struct {
-        bool Suspend : 1;
-        bool Delay : 1;
-        bool Semaphore : 1;
+        uint8_t Suspend : 1;
+        uint8_t Delay : 1;
+        uint8_t Semaphore : 1;
     };
-    bool All;
+    uint8_t All;
 } TTaskBlockedFlags;
 
 typedef struct SFeeRTOS_Task {

@@ -34,9 +34,7 @@ TFeeRTOS_TaskHandle FeeRTOS_CreateTask(void (*aTaskFunction)(void* aUserData), v
     t->UserData = aUserData;
     t->Stack = FeeRTOS_CreateStack(StackSize);
     t->nextTask = NULL;
-    t->BlockedFlags.Suspend = false;
-    t->BlockedFlags.Delay = false;
-    t->BlockedFlags.Semaphore = false;
+    t->BlockedFlags.All = 0;
     t->DelayTimer = NULL;
     t->Priority = Priority;
     t->BasePriority = Priority; // Für Prioritätsvererbung
@@ -118,7 +116,7 @@ void FeeRTOS_DeleteTask(TFeeRTOS_TaskHandle aTaskHandle) {
 void FeeRTOS_StartScheduler(void) {
     if(TaskListHead == NULL) return;
 
-    CurrentTask = TaskListHead;
+    CurrentTask = TaskListHead; // getNextTask() um von anfang an nach höchster Prio zu Schedulen
     SchedulerRunning = true;
 
     FeeRTOS_SetupTickTimer(TICK_RATE);
@@ -314,7 +312,7 @@ static TFeeRTOS_TaskHandle getNextTask(void) {
 }
 
 static inline bool isReadyToRun(TFeeRTOS_TaskHandle task) {
-    return !task->BlockedFlags.All; // Alle Blockade-Flags müssen 0 sein, damit der Task ready ist
+    return task->BlockedFlags.All == 0; // Alle Blockade-Flags müssen 0 sein, damit der Task ready ist
 }
 
 static void IdleTask(void* aUserData) {

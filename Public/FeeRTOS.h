@@ -98,6 +98,8 @@ void FeeRTOS_ResumeTask(TFeeRTOS_TaskHandle aTaskHandle);
 
 // Eventgroups testen und Mutexe mit Prioritätsvererbung testen
 
+// Scheduler anpassen StartSchedzuler sollte direkt nach Prio gehen nicht bei Idle starten
+
 // ISR und Hardware code trennen von Kernel code
 // Kommentare
 

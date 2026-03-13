@@ -25,9 +25,25 @@ void FeeRTOS_DeleteEventgroup(TFeeRTOS_EventgroupHandle eventgroup) {
 void FeeRTOS_EventgroupWait(TFeeRTOS_EventgroupHandle eventgroup, uint8_t aBits, bool aWaitForAll) {
     if(eventgroup == NULL) return;
 
+    FeeRTOS_ENTER_CRITICAL(); // Wichtig: Bits dürfen sich während der Prüfung nicht ändern
+
+    bool conditionMet = aWaitForAll ? 
+        ((eventgroup->Bits & aBits) == aBits) : 
+        ((eventgroup->Bits & aBits) != 0);
+
+    if (conditionMet) {
+        // Bedingung ist schon erfüllt! Wir müssen gar nicht erst warten.
+        FeeRTOS_EXIT_CRITICAL();
+        return; 
+    }
+
     TFeeRTOS_TaskHandle currentTask = getCurrentTask();
     TFeeRTOS_WaitingTask* waitingTask = (TFeeRTOS_WaitingTask*)FeeRTOS_Malloc(sizeof(TFeeRTOS_WaitingTask));
-    if(waitingTask == NULL) return;
+    
+    if(waitingTask == NULL) {
+        FeeRTOS_EXIT_CRITICAL();
+        return;
+    }
 
     waitingTask->TaskHandle = currentTask;
     waitingTask->Bits = aBits;
@@ -35,7 +51,9 @@ void FeeRTOS_EventgroupWait(TFeeRTOS_EventgroupHandle eventgroup, uint8_t aBits,
     waitingTask->Next = eventgroup->WaitingListHead;
     eventgroup->WaitingListHead = waitingTask;
 
-    FeeRTOS_SuspendTask(currentTask);
+    // Task blockieren
+    FeeRTOS_EXIT_CRITICAL(); // Critical Section verlassen bevor Yield
+    FeeRTOS_SuspendTask(currentTask); 
 }
 
 void FeeRTOS_EventgroupSetBit(TFeeRTOS_EventgroupHandle eventgroup, uint8_t aBitIndex, bool aSet) {
