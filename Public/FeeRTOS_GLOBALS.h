@@ -13,6 +13,10 @@
 #define CALLBACK_TASK_STACK_SIZE 128
 
 /**
+ * Definieren welche HEAP Implementierung verwendet werden soll (HEAP1 / HEAP2)
+ */
+#define HEAP1
+/**
  * Heap-Groesse in Bytes
  */
 #define HEAP_SIZE 5120
@@ -21,5 +25,7 @@
  * Auskommentieren spart RAM, kann aber zu mehr Fragmentierung fuehren
  */
 #define ALLOW_INTERNAL_FRAGMENTATION // Comment out to save RAM at cost of potentially more fragmentation
+
+
 
 #endif

@@ -6,7 +6,7 @@
 /**
  * FeeRTOS_InitHeap
  * Initialisiert den Heap-Speicher.
- * Muss vor der ersten Speicherallokation aufgerufen werden.
+ * Wird automatisch vor der ersten Speicherallokation aufgerufen.
  */
 void FeeRTOS_InitHeap(void);
 
