@@ -1,7 +1,12 @@
 #ifndef FEERTOS_GLOBALS_H
 #define FEERTOS_GLOBALS_H
 
+#ifndef F_CPU
+#error "F_CPU must be defined before including FeeRTOS_GLOBALS.h"
+#endif
+
 #define TICK_RATE 1e-3
+#define TICK_FREQ (1.0 / TICK_RATE)
 
 /**
  * Stack-Groesse des Idle-Tasks in Bytes

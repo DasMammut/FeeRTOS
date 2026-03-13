@@ -121,7 +121,7 @@ void FeeRTOS_StartScheduler(void) {
     CurrentTask = TaskListHead;
     SchedulerRunning = true;
 
-    TimerInit(TIMER_NO_A0_16, F_CPU, TIMER_MODE_NORMAL, TICK_RATE);
+    FeeRTOS_SetupTickTimer(TICK_RATE);
 
     FeeRTOS_ENTER_CRITICAL();
 

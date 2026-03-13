@@ -10,7 +10,7 @@
 #include <avr/interrupt.h>
 
 #include "FeeRTOS_GLOBALS.h"
-#include "IFeeRTOS_HWTimer.h"
+#include "IFeeRTOS_TickTimer.h"
 #include "IFeeRTOS_Timer.h"
 #include "IFeeRTOS_Stack.h"
 #include "IFeeRTOS_Semaphore.h"
