@@ -117,6 +117,7 @@ void FeeRTOS_StartScheduler(void) {
     if(TaskListHead == NULL) return;
 
     CurrentTask = TaskListHead; // getNextTask() um von anfang an nach höchster Prio zu Schedulen
+    CurrentTask = getNextTask();
     SchedulerRunning = true;
 
     FeeRTOS_SetupTickTimer(TICK_RATE);
