@@ -28,13 +28,14 @@ typedef union UTaskBlockedFlags {
 typedef struct SFeeRTOS_Task {
     void (*TaskFunction)(void* aUserData);
     void* UserData;
-    TFeeRTOS_StackHandle Stack;
-    TTaskBlockedFlags BlockedFlags;
-    TFeeRTOS_TimerHandle DelayTimer;
-    TTaskPriority Priority;
-    TTaskPriority BasePriority; // Für Prioritätsvererbung
     struct SFeeRTOS_Task* nextWaiting;
     struct SFeeRTOS_Task* nextTask;
+    TFeeRTOS_TimerHandle DelayTimer;
+    TFeeRTOS_StackHandle Stack;
+    TTaskBlockedFlags BlockedFlags;
+    TTaskPriority Priority;
+    TTaskPriority BasePriority; // Für Prioritätsvererbung
+    
 } TFeeRTOS_Task;
 
 TFeeRTOS_TaskHandle getCurrentTask(void);

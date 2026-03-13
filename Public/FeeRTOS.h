@@ -92,14 +92,12 @@ void FeeRTOS_SuspendTask(TFeeRTOS_TaskHandle aTaskHandle);
 
 void FeeRTOS_ResumeTask(TFeeRTOS_TaskHandle aTaskHandle);
 
-// ON the way !!!!
+// ON the way ---------------!!!!
 
 // Yield umbauen das es keine Verzehrung macht // nicht möglich
 
 // Eventgroups testen und Mutexe mit Prioritätsvererbung testen
-// Heap2 mehr rechen Zeit weniger Header Speicher
 
-// Structs memory optimierung
 // ISR und Hardware code trennen von Kernel code
 // Kommentare
 

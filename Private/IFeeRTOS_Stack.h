@@ -6,9 +6,9 @@
 #include "IFeeRTOS.h"
 
 typedef struct SFeeRTOS_Stack{
+    uint16_t Size;
     void* StackPointer;
     void* Base;
-    uint16_t Size;
 } TFeeRTOS_Stack;
 
 #endif

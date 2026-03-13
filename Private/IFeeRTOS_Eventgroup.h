@@ -13,8 +13,8 @@ typedef struct SFeeRTOS_WaitingTask {
 } TFeeRTOS_WaitingTask;
 
 typedef struct SFeeRTOS_Eventgroup {
-    uint8_t Bits;
     TFeeRTOS_WaitingTask* WaitingListHead;
+    uint8_t Bits;
 } TFeeRTOS_Eventgroup;
 
 

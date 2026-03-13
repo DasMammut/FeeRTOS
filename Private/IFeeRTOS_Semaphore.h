@@ -8,10 +8,10 @@
 #include "IFeeRTOS.h"
 
 typedef struct SFeeRTOS_Semaphore {
-    volatile uint8_t Count;
-    uint8_t MaxCount;
     TFeeRTOS_TaskHandle WaitingListHead;
     TFeeRTOS_TaskHandle WaitingListTail;
+    volatile uint8_t Count;
+    uint8_t MaxCount;
 } TFeeRTOS_Semaphore;
 
 
