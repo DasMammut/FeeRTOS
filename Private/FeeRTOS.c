@@ -5,20 +5,16 @@ static TFeeRTOS_TaskHandle CurrentTask = NULL;
 static TFeeRTOS_TaskHandle CallbackTaskHandle = NULL;
 
 static volatile bool SchedulerRunning = false;
-static volatile uint16_t SavedSP;
-static volatile uint16_t MallocSavedSP;
-static volatile bool ForcedYield = false;
-static volatile uint16_t ForcedYieldSavedCNT = 0;
-
-static void Schedule(void);
+volatile uint16_t SavedSP; // Linker von Asm zu C, da SP in Asm direkt manipuliert wird
+volatile bool ForcedYield = false;
 
 static TFeeRTOS_TaskHandle getNextTask(void);
 
 static inline bool isReadyToRun(TFeeRTOS_TaskHandle task);
 
-static void IdleTask(void* aUserData);
+static void IdleTask(void* aUserData); // IdleTask ist immer bereit, wenn kein anderer Task läuft, daher immer lowest prio
 
-static void DelayCallback(void* args);
+static void DelayCallback(void* args); // Callback für die Timer, damit sie den Task wieder freigeben können, wenn die Zeit abgelaufen ist
 
 void FeeRTOS_Init(void) {
     FeeRTOS_CreateTask(IdleTask, NULL, IDLE_TASK_STACK_SIZE, TASK_PRIORITY_IDLE);
@@ -57,25 +53,8 @@ TFeeRTOS_TaskHandle FeeRTOS_CreateTask(void (*aTaskFunction)(void* aUserData), v
     }
 
     // Initialen Kontext auf den Stack legen (simuliert ISR-Entry + Context Save)
-    uint8_t byte;
-    uint16_t pc = (uint16_t)(uintptr_t)aTaskFunction;
-    byte = (uint8_t)(pc & 0xFF); // PC Low-Byte
-    FeeRTOS_StackPush(t->Stack, &byte, 1);
-    byte = (uint8_t)((pc >> 8) & 0xFF); // PC High-Byte
-    FeeRTOS_StackPush(t->Stack, &byte, 1);
+    Port_InitializeStack(t->Stack, aTaskFunction, aUserData);
 
-    // R1–R31 (UserData in R24:R25 — AVR Calling Convention)
-    for (uint8_t r = 0; r <= 31 + 1; r++) {
-        if (r == 1) // SREG // Interupts enabled
-            byte = 0x80;
-        else if (r == 24 + 1) // R24
-            byte = (uint8_t)((uint16_t)(uintptr_t)aUserData & 0xFF);
-        else if (r == 25 + 1) // R25
-            byte = (uint8_t)(((uint16_t)(uintptr_t)aUserData >> 8) & 0xFF);
-        else
-            byte = 0x00;
-        FeeRTOS_StackPush(t->Stack, &byte, 1);
-    }
     FeeRTOS_EXIT_CRITICAL();
     return t;
 }
@@ -126,28 +105,8 @@ void FeeRTOS_StartScheduler(void) {
 
     SavedSP = (uint16_t)(uintptr_t)CurrentTask->Stack->StackPointer;
 
-    asm volatile(
-        "lds  r16, SavedSP      \n\t"
-        "lds  r17, SavedSP+1    \n\t"
-        "out  __SP_H__, r17     \n\t"
-        "out  __SP_L__, r16     \n\t"
+    asm volatile("jmp Port_RestoreContext"); // Direkter Jump zu Port_restoreContext (Stack wird von ISR-Entry simuliert)
 
-        "pop  r31 \n\t"  "pop  r30 \n\t"  "pop  r29 \n\t"  "pop  r28 \n\t"
-        "pop  r27 \n\t"  "pop  r26 \n\t"  "pop  r25 \n\t"  "pop  r24 \n\t"
-        "pop  r23 \n\t"  "pop  r22 \n\t"  "pop  r21 \n\t"  "pop  r20 \n\t"
-        "pop  r19 \n\t"  "pop  r18 \n\t"  "pop  r17 \n\t"  "pop  r16 \n\t"
-        "pop  r15 \n\t"  "pop  r14 \n\t"  "pop  r13 \n\t"  "pop  r12 \n\t"
-        "pop  r11 \n\t"  "pop  r10 \n\t"  "pop  r9  \n\t"  "pop  r8  \n\t"
-        "pop  r7  \n\t"  "pop  r6  \n\t"  "pop  r5  \n\t"  "pop  r4  \n\t"
-        "pop  r3  \n\t"  "pop  r2  \n\t"  "pop  r1  \n\t"
-
-        "pop  r0              \n\t"
-        "out  __SREG__, r0    \n\t"
-
-        "pop  r0              \n\t"
-
-        "reti                 \n\t"
-    );
     __builtin_unreachable(); // Compiler info dass diese Funktion nie zurückkehrt
 }
 
@@ -155,9 +114,9 @@ void FeeRTOS_Yield(void) {
 	if(!SchedulerRunning) return;
     FeeRTOS_ENTER_CRITICAL();
     ForcedYield = true;
-    ForcedYieldSavedCNT = TCA0.SINGLE.CNT; // Counter sichern
-    TCA0.SINGLE.INTFLAGS = TCA_SINGLE_OVF_bm; // Pending OVF clearen
-    TCA0.SINGLE.CNT = TCA0.SINGLE.PER; // Counter auf PER -> OVF beim naechsten Timer-Takt
+
+    Port_Yield();
+    
     FeeRTOS_EXIT_CRITICAL();
     asm volatile("nop"); // Buffer für den Timer-Interrupt
     asm volatile("nop");
@@ -201,69 +160,22 @@ TFeeRTOS_TaskHandle getCallbackTask(void) {
 }
 
 __attribute__((used))
-static void Schedule(void) {
-    CurrentTask->Stack->StackPointer = (void*)(uintptr_t)SavedSP;
+void Schedule(void) {
+    Port_Schedule(); 
 
-    if (ForcedYield) {
-        TCA0.SINGLE.CNT = ForcedYieldSavedCNT; // Counter wiederherstellen
-        ForcedYield = false;
-    } 
-    else{
+    if (!ForcedYield) {
         TickCount++;
         FeeRTOS_UpdateTimers();
+    } 
+    else {
+        ForcedYield = false;
     }
+
+    CurrentTask->Stack->StackPointer = (void*)(uintptr_t)SavedSP;
 
     CurrentTask = getNextTask();
 
     SavedSP = (uint16_t)(uintptr_t)CurrentTask->Stack->StackPointer;
-
-    TCA0.SINGLE.INTFLAGS = TCA_SINGLE_OVF_bm;
-}
-
-ISR(TCA0_OVF_vect, ISR_NAKED) {
-    // Context Save
-    asm volatile(
-        "push r0              \n\t"
-        "in   r0, __SREG__    \n\t"
-        "push r0              \n\t"
-
-        "push r1  \n\t"  "push r2  \n\t"  "push r3  \n\t"  "push r4  \n\t"
-        "push r5  \n\t"  "push r6  \n\t"  "push r7  \n\t"  "push r8  \n\t"
-        "push r9  \n\t"  "push r10 \n\t"  "push r11 \n\t"  "push r12 \n\t"
-        "push r13 \n\t"  "push r14 \n\t"  "push r15 \n\t"  "push r16 \n\t"
-        "push r17 \n\t"  "push r18 \n\t"  "push r19 \n\t"  "push r20 \n\t"
-        "push r21 \n\t"  "push r22 \n\t"  "push r23 \n\t"  "push r24 \n\t"
-        "push r25 \n\t"  "push r26 \n\t"  "push r27 \n\t"  "push r28 \n\t"
-        "push r29 \n\t"  "push r30 \n\t"  "push r31 \n\t"
-
-        "in   r16, __SP_L__   \n\t"
-        "in   r17, __SP_H__   \n\t"
-        "sts  SavedSP,   r16  \n\t"
-        "sts  SavedSP+1, r17  \n\t"
-
-        "call Schedule \n\t"
-
-        // Context Restore
-        "lds  r16, SavedSP    \n\t"
-        "lds  r17, SavedSP+1  \n\t"
-        "out  __SP_H__, r17   \n\t"
-        "out  __SP_L__, r16   \n\t"
-
-        "pop  r31 \n\t"  "pop  r30 \n\t"  "pop  r29 \n\t"  "pop  r28 \n\t"
-        "pop  r27 \n\t"  "pop  r26 \n\t"  "pop  r25 \n\t"  "pop  r24 \n\t"
-        "pop  r23 \n\t"  "pop  r22 \n\t"  "pop  r21 \n\t"  "pop  r20 \n\t"
-        "pop  r19 \n\t"  "pop  r18 \n\t"  "pop  r17 \n\t"  "pop  r16 \n\t"
-        "pop  r15 \n\t"  "pop  r14 \n\t"  "pop  r13 \n\t"  "pop  r12 \n\t"
-        "pop  r11 \n\t"  "pop  r10 \n\t"  "pop  r9  \n\t"  "pop  r8  \n\t"
-        "pop  r7  \n\t"  "pop  r6  \n\t"  "pop  r5  \n\t"  "pop  r4  \n\t"
-        "pop  r3  \n\t"  "pop  r2  \n\t"  "pop  r1  \n\t"
-
-        "pop  r0              \n\t"
-        "out  __SREG__, r0    \n\t"
-        "pop  r0              \n\t"
-
-        "reti                 \n\t"
-    );
 }
 
 static TFeeRTOS_TaskHandle getNextTask(void) {

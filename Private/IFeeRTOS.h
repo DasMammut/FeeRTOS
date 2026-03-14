@@ -10,11 +10,13 @@
 #include <avr/interrupt.h>
 
 #include "FeeRTOS_GLOBALS.h"
-#include "IFeeRTOS_TickTimer.h"
 #include "IFeeRTOS_Timer.h"
 #include "IFeeRTOS_Stack.h"
 #include "IFeeRTOS_Semaphore.h"
 #include "IFeeRTOS_Heap.h"
+
+#include "Port_atmega4809_TickTimer.h"
+#include "Port_atmega4809_Port.h"
 
 typedef union UTaskBlockedFlags {
     struct {
