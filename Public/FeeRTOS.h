@@ -92,11 +92,13 @@ void FeeRTOS_SuspendTask(TFeeRTOS_TaskHandle aTaskHandle);
 
 void FeeRTOS_ResumeTask(TFeeRTOS_TaskHandle aTaskHandle);
 
+
 // ON the way ---------------!!!!
 
-// Yield umbauen das es keine Verzehrung macht // nicht möglich
+// Yield umbauen das es keine Verzehrung macht // für atmega4809 nicht möglich
 
-// ISR und Hardware code trennen von Kernel code
 // Kommentare
+
+// Porten auf Arm Cortex M4 (stm32)
 
 #endif
