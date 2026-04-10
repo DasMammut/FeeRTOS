@@ -40,16 +40,12 @@ void* FeeRTOS_Malloc(size_t size) {
         newBlock->IsFree = true;
         newBlock->Next = current->Next;
 
-        current->IsFree = false;
         current->Next = newBlock;
 
         FreeBytes -= HeapHeaderSize; // Neuer Header für den neuen Block
 
     } 
-    else {
-        // Gesamten Block verwenden
-        current->IsFree = false;
-    }
+    current->IsFree = false;
     FreeBytes -= getBlockSize(current);
 
     FeeRTOS_EXIT_CRITICAL();
