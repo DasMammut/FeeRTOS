@@ -115,16 +115,12 @@ static inline void mergeBlocks(TFeeRTOS_HeapBlock* block, TFeeRTOS_HeapBlock* pr
     // mit dem nächsten Block zusammenführen, wenn dieser frei ist
     if (previous != NULL && previous->IsFree) {
         previous->Next = block->Next;
-        if (previous->Next == NULL) {
-        }
         block = previous; // Für die nächste Zusammenführung
         FreeBytes += HeapHeaderSize; // Header wird entfernt
     }
 
     if(block->Next != NULL && block->Next->IsFree) {
         block->Next = block->Next->Next;
-        if (block->Next == NULL) {
-        }
         FreeBytes += HeapHeaderSize; // Header wird entfernt
     }
 

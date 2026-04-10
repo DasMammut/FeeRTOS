@@ -15,7 +15,7 @@ void FeeRTOS_InitHeap(void) {
     BlockListHead->Size = HEAP_SIZE - HeapHeaderSize;
     BlockListHead->IsFree = true;
     BlockListHead->Next = NULL;
-    FreeBytes -= HeapHeaderSize;
+    FreeBytes = HEAP_SIZE - HeapHeaderSize;
 }
 
 void* FeeRTOS_Malloc(size_t size) {
@@ -117,8 +117,6 @@ static inline void mergeBlocks(TFeeRTOS_HeapBlock* block, TFeeRTOS_HeapBlock* pr
     if (previous != NULL && previous->IsFree) {
         previous->Size += HeapHeaderSize + block->Size;
         previous->Next = block->Next;
-        if (previous->Next == NULL) {
-        }
         block = previous; // Für die nächste Zusammenführung
         FreeBytes += HeapHeaderSize; // Header wird entfernt
     }
@@ -126,8 +124,6 @@ static inline void mergeBlocks(TFeeRTOS_HeapBlock* block, TFeeRTOS_HeapBlock* pr
     if(block->Next != NULL && block->Next->IsFree) {
         block->Size += HeapHeaderSize + block->Next->Size;
         block->Next = block->Next->Next;
-        if (block->Next == NULL) {
-        }
         FreeBytes += HeapHeaderSize; // Header wird entfernt
     }
 
