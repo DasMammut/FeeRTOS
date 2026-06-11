@@ -88,17 +88,31 @@ void FeeRTOS_Yield(void);
  */
 void FeeRTOS_Delay(uint16_t aDelayMs);
 
+/*
+ * FeeRTOS_SuspendTask
+ * Blockiert den angegebenen Task manuell. Der Task wird nicht mehr ausgefuehrt,
+ * bis er wieder freigegeben wird. Wenn der aktuell laufende Task sich selbst
+ * suspendiert, wird sofort ein Context-Switch ausgelöst.
+ *
+ * aTaskHandle - Handle des zu suspendierenden Tasks
+ */
 void FeeRTOS_SuspendTask(TFeeRTOS_TaskHandle aTaskHandle);
 
+/*
+ * FeeRTOS_ResumeTask
+ * Gibt einen zuvor suspendierten Task wieder frei. Der Task kann nun wieder
+ * vom Scheduler ausgeführt werden.
+ *
+ * aTaskHandle - Handle des zu resumierenden Tasks
+ */
 void FeeRTOS_ResumeTask(TFeeRTOS_TaskHandle aTaskHandle);
+
 
 
 // ON the way ---------------!!!!
 
 // Yield umbauen das es keine Verzehrung macht // für atmega4809 nicht möglich
-
 // Kommentare
-
 // Porten auf Arm Cortex M4 (stm32)
 
 #endif
